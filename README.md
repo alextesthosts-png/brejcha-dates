@@ -2,6 +2,15 @@
 
 A Python and GitHub Actions monitor for newly published concerts on [Boris Brejcha's official dates page](https://www.borisbrejcha.de/dates). It uses a headless browser to extract events, remembers previously seen concerts, and sends Discord webhook notifications for newly detected events.
 
+## Setup
+
+1. Create a private GitHub repository and upload the contents of this project (including .github/workflows/monitor.yml).
+2. In Discord, open the destination channel's Edit Channel → Integrations → Webhooks (or Server Settings → Integrations → Webhooks). Create a webhook and copy its URL.
+3. In GitHub, open Settings → Secrets and variables → Actions → New repository secret. Name it DISCORD_WEBHOOK_URL and paste the webhook URL. Never commit the webhook URL.
+4. Under Settings → Actions → General → Workflow permissions, select Read and write permissions so the workflow can commit data/events.json. Ensure repository branch protections permit the Actions bot to push to the default branch, or adjust the persistence strategy.
+5. Open Actions → Monitor concerts → Run workflow. Check the logs. On the first successful run, existing concerts become the baseline; no Discord messages are sent.
+6. Subsequent successful runs check for new events and post them to Discord. The scheduled workflow runs at minute 17 every six hours (UTC); GitHub may delay scheduled runs.
+
 ## How detection works
 
 The monitor uses **Python, Playwright, BeautifulSoup, Requests, and GitHub Actions**. It runs on a six-hour schedule and supports manual runs.
