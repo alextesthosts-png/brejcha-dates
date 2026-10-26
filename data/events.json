@@ -10,13 +10,14 @@
     "7ee543f809bd0dc4a8ee",
     "837a4a9902bc0e6199ba",
     "8c2eb5753bf33258bc25",
+    "9be3790399a626bd3e62",
     "a769e516f16c7d2f23ab",
     "aca77504f70da76807bd",
     "ae81a601249e65d33aa5",
     "dccfa39320035708f4c4",
     "f1862e2db218262d3173"
   ],
-  "last_seen": "2026-10-26T10:24:30.699090+00:00",
+  "last_seen": "2026-10-26T15:06:27.378313+00:00",
   "current_events": [
     {
       "date": "2026-10-29T19:00:00",
@@ -80,6 +81,13 @@
       "location": "Soho Garden Meydan Dubai International Financial Centre, United Arab Emirates",
       "url": "https://www.bandsintown.com/e/1040169393",
       "id": "5dd473eb6cc0ebe64600"
+    },
+    {
+      "date": "2026-12-01T12:00:00",
+      "title": "Boris Brejcha @ TBC, Lisboa",
+      "location": "TBC, Lisboa Lisbon, Portugal",
+      "url": "https://www.bandsintown.com/e/1040487951",
+      "id": "9be3790399a626bd3e62"
     },
     {
       "date": "2027-01-15T16:00:00",
