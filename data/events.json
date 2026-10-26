@@ -1,0 +1,127 @@
+{
+  "known_ids": [
+    "37b26d1c91e0bbd5165d",
+    "3cf1fe1e488b2214c59a",
+    "44e6b5104fbcf70677ee",
+    "5dd0a483d6e67641be79",
+    "5dd473eb6cc0ebe64600",
+    "77078b57accb1b61d38a",
+    "7a120a2ebf84c8b86943",
+    "7ee543f809bd0dc4a8ee",
+    "837a4a9902bc0e6199ba",
+    "8c2eb5753bf33258bc25",
+    "a769e516f16c7d2f23ab",
+    "aca77504f70da76807bd",
+    "ae81a601249e65d33aa5",
+    "dccfa39320035708f4c4",
+    "f1862e2db218262d3173"
+  ],
+  "last_seen": "2026-10-26T01:46:54.451774+00:00",
+  "current_events": [
+    {
+      "date": "2026-10-29T19:00:00",
+      "title": "Boris Brejcha @ ONYX Arena",
+      "location": "ONYX Arena Jeddah, Saudi Arabia",
+      "url": "https://www.bandsintown.com/e/108982792",
+      "id": "f1862e2db218262d3173"
+    },
+    {
+      "date": "2026-10-30T20:00:00",
+      "title": "Boris Brejcha @ BERNEXPO",
+      "location": "BERNEXPO Bern, Switzerland",
+      "url": "https://www.bandsintown.com/e/108622222",
+      "id": "37b26d1c91e0bbd5165d"
+    },
+    {
+      "date": "2026-10-31T18:00:00",
+      "title": "Boris Brejcha @ MVM Dome",
+      "location": "MVM Dome Budapest, Hungary",
+      "url": "https://www.bandsintown.com/e/107705403",
+      "id": "5dd0a483d6e67641be79"
+    },
+    {
+      "date": "2026-11-06T21:00:00",
+      "title": "Boris Brejcha @ parque de la industria",
+      "location": "parque de la industria Ciudad De Guatemala, Guatemala",
+      "url": "https://www.bandsintown.com/e/108729208",
+      "id": "dccfa39320035708f4c4"
+    },
+    {
+      "date": "2026-11-07T19:00:00",
+      "title": "Boris Brejcha @ Banorte Stadium",
+      "location": "Banorte Stadium Ciudad Universitaria, Mexico",
+      "url": "https://www.bandsintown.com/e/108936680",
+      "id": "7ee543f809bd0dc4a8ee"
+    },
+    {
+      "date": "2026-11-13T21:00:00",
+      "title": "Boris Brejcha @ Laroc Club",
+      "location": "Laroc Club Valinhos, Brazil",
+      "url": "https://www.bandsintown.com/e/108975717",
+      "id": "837a4a9902bc0e6199ba"
+    },
+    {
+      "date": "2026-11-14T13:00:00",
+      "title": "Boris Brejcha @ Club Hípico de Santiago",
+      "location": "Club Hípico de Santiago Santiago, Chile",
+      "url": "https://www.bandsintown.com/e/108982713",
+      "id": "a769e516f16c7d2f23ab"
+    },
+    {
+      "date": "2026-11-20T21:00:00",
+      "title": "Boris Brejcha @ Eventhotel Pyramide",
+      "location": "Eventhotel Pyramide Vösendorf, Austria",
+      "url": "https://www.bandsintown.com/e/108680336",
+      "id": "ae81a601249e65d33aa5"
+    },
+    {
+      "date": "2026-11-27T22:00:00",
+      "title": "Boris Brejcha @ Soho Garden Meydan",
+      "location": "Soho Garden Meydan Dubai International Financial Centre, United Arab Emirates",
+      "url": "https://www.bandsintown.com/e/1040169393",
+      "id": "5dd473eb6cc0ebe64600"
+    },
+    {
+      "date": "2027-01-15T16:00:00",
+      "title": "Boris Brejcha @ Arena Joondalup - Perth",
+      "location": "Arena Joondalup - Perth Joondalup, Australia",
+      "url": "https://www.bandsintown.com/e/1040352768",
+      "id": "3cf1fe1e488b2214c59a"
+    },
+    {
+      "date": "2027-01-16T14:00:00",
+      "title": "Boris Brejcha @ ENGIE Stadium",
+      "location": "ENGIE Stadium Sydney Olympic Park, Australia",
+      "url": "https://www.bandsintown.com/e/1040352407",
+      "id": "44e6b5104fbcf70677ee"
+    },
+    {
+      "date": "2027-01-22T14:00:00",
+      "title": "Boris Brejcha @ Eatons Hill Hotel",
+      "location": "Eatons Hill Hotel Eatons Hill, Australia",
+      "url": "https://www.bandsintown.com/e/1040352328",
+      "id": "77078b57accb1b61d38a"
+    },
+    {
+      "date": "2027-01-23T12:00:00",
+      "title": "Boris Brejcha @ Melbourne Showgrounds",
+      "location": "Melbourne Showgrounds Ascot Vale, Australia",
+      "url": "https://www.bandsintown.com/e/1040351682",
+      "id": "8c2eb5753bf33258bc25"
+    },
+    {
+      "date": "2027-02-05T19:30:00",
+      "title": "Boris Brejcha @ Igloofest",
+      "location": "Igloofest Montréal, Canada",
+      "url": "https://www.bandsintown.com/e/109059975",
+      "id": "7a120a2ebf84c8b86943"
+    },
+    {
+      "date": "2027-08-07T14:00:00",
+      "title": "Boris Brejcha @ Theaterplatz Dresden",
+      "location": "Theaterplatz Dresden Dresden, Germany",
+      "url": "https://www.bandsintown.com/e/109048807",
+      "id": "aca77504f70da76807bd"
+    }
+  ]
+}
