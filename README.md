@@ -9,11 +9,11 @@ A Python and GitHub Actions monitor for newly published concerts on [Boris Brejc
 3. In GitHub, open Settings → Secrets and variables → Actions → New repository secret. Name it DISCORD_WEBHOOK_URL and paste the webhook URL. Never commit the webhook URL.
 4. Under Settings → Actions → General → Workflow permissions, select Read and write permissions so the workflow can commit data/events.json. Ensure repository branch protections permit the Actions bot to push to the default branch, or adjust the persistence strategy.
 5. Open Actions → Monitor concerts → Run workflow. Check the logs. On the first successful run, existing concerts become the baseline; no Discord messages are sent.
-6. Subsequent successful runs check for new events and post them to Discord. The scheduled workflow runs at minute 17 every six hours (UTC); GitHub may delay scheduled runs.
+6. Subsequent successful runs check for new events and post them to Discord. The scheduled workflow runs at minute 17 every three hours (UTC); GitHub may delay scheduled runs.
 
 ## How detection works
 
-The monitor uses **Python, Playwright, BeautifulSoup, Requests, and GitHub Actions**. It runs on a six-hour schedule and supports manual runs.
+The monitor uses **Python, Playwright, BeautifulSoup, Requests, and GitHub Actions**. It runs on a three-hour schedule and supports manual runs.
 
 ### 1. Website rendering and data collection
 
@@ -106,10 +106,10 @@ The workflow is `.github/workflows/monitor.yml` and includes:
 
 ```yaml
 schedule:
-  - cron: '17 */6 * * *'
+  - cron: '17 */3 * * *'
 ```
 
-This requests runs at approximately **00:17, 06:17, 12:17, and 18:17 UTC**. GitHub Actions may delay or occasionally skip scheduled runs.
+This requests runs at approximately **00:17, 03:17, 06:17, 09:17, 12:17, 15:17, 18:17 and 21:17 UTC**. GitHub Actions may delay or occasionally skip scheduled runs.
 
 The `workflow_dispatch` trigger also supports:
 
