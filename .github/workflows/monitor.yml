@@ -1,12 +1,19 @@
+
 name: Monitor concerts
 
 on:
   schedule:
     - cron: '17 */6 * * *'
+
   workflow_dispatch:
     inputs:
       test_discord:
-        description: 'Send a Discord test message'
+        description: 'Send a basic Discord webhook test'
+        type: boolean
+        default: false
+
+      test_concert:
+        description: 'Send a sample concert using monitor.py'
         type: boolean
         default: false
 
@@ -21,12 +28,15 @@ jobs:
   monitor:
     runs-on: ubuntu-latest
     timeout-minutes: 12
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out repository
+        uses: actions/checkout@v4
         with:
           persist-credentials: true
 
-      - uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
           cache: pip
@@ -36,11 +46,11 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Install Playwright browser
-        if: ${{ inputs.test_discord != true }}
+        if: ${{ inputs.test_discord != true && inputs.test_concert != true }}
         run: python -m playwright install --with-deps chromium
 
-      - name: Send Discord test notification
-        if: ${{ inputs.test_discord == true }}
+      - name: Send basic Discord test notification
+        if: ${{ inputs.test_discord == true && inputs.test_concert != true }}
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
@@ -51,12 +61,14 @@ jobs:
           import urllib.error
 
           url = os.environ["DISCORD_WEBHOOK_URL"]
+
           payload = {
               "content": (
                   "🎧 Boris Brejcha Concert Monitor\n"
                   "✅ Discord webhook test successful!"
               )
           }
+
           request = urllib.request.Request(
               url,
               data=json.dumps(payload).encode("utf-8"),
@@ -66,23 +78,61 @@ jobs:
               },
               method="POST"
           )
+
           try:
               with urllib.request.urlopen(request, timeout=20) as response:
                   print("Discord HTTP status:", response.status)
           except urllib.error.HTTPError as error:
               print("Discord HTTP status:", error.code)
-              print("Response:", error.read().decode("utf-8", errors="replace")[:500])
+              print(
+                  "Response:",
+                  error.read().decode(
+                      "utf-8", errors="replace"
+                  )[:500]
+              )
               raise
           PY
 
+      - name: Send sample concert notification
+        if: ${{ inputs.test_concert == true && inputs.test_discord != true }}
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          python - <<'PY'
+          import os
+          from monitor import send_discord
+
+          webhook = os.environ["DISCORD_WEBHOOK_URL"]
+
+          sample_event = {
+              "date": "2099-05-15",
+              "title": (
+                  "[TEST ONLY] Boris Brejcha - "
+                  "Sample Concert (not a real event)"
+              ),
+              "location": (
+                  "Example Arena, Berlin, Germany "
+                  "(fictional)"
+              ),
+              "url": "https://www.borisbrejcha.de/dates"
+          }
+
+          print("Sending fictional concert notification...")
+
+          send_discord(sample_event, webhook)
+
+          print("Sample concert notification sent successfully!")
+          print("Saved concert data was not modified.")
+          PY
+
       - name: Check concert dates
-        if: ${{ inputs.test_discord != true }}
+        if: ${{ inputs.test_discord != true && inputs.test_concert != true }}
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: python monitor.py
 
       - name: Upload HTML for troubleshooting on failure
-        if: ${{ failure() && inputs.test_discord != true }}
+        if: ${{ failure() && inputs.test_discord != true && inputs.test_concert != true }}
         uses: actions/upload-artifact@v4
         with:
           name: debug-html
@@ -91,14 +141,22 @@ jobs:
           retention-days: 3
 
       - name: Persist event state
-        if: ${{ always() && inputs.test_discord != true }}
+        if: ${{ always() && inputs.test_discord != true && inputs.test_concert != true }}
         run: |
           if [ -f data/events.json ]; then
             git config user.name 'github-actions[bot]'
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
             git add data/events.json
+
             if ! git diff --cached --quiet; then
               git commit -m 'Update known concert events [skip ci]'
               git push
             fi
           fi
+
+      - name: Reject conflicting test selections
+        if: ${{ inputs.test_discord == true && inputs.test_concert == true }}
+        run: |
+          echo "ERROR: Select only one test option."
+          exit 1
