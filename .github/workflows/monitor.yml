@@ -3,7 +3,6 @@ name: Monitor concerts
 on:
   schedule:
     - cron: '17 */6 * * *'
-
   workflow_dispatch:
     inputs:
       test_discord:
@@ -22,7 +21,6 @@ jobs:
   monitor:
     runs-on: ubuntu-latest
     timeout-minutes: 12
-
     steps:
       - uses: actions/checkout@v4
         with:
@@ -50,26 +48,31 @@ jobs:
           import os
           import json
           import urllib.request
+          import urllib.error
 
           url = os.environ["DISCORD_WEBHOOK_URL"]
-
           payload = {
               "content": (
-                  "🎧 **Boris Brejcha Concert Monitor**\n"
-                  "✅ Test successful! GitHub Actions "
-                  "can send messages to this Discord channel."
+                  "🎧 Boris Brejcha Concert Monitor\n"
+                  "✅ Discord webhook test successful!"
               )
           }
-
           request = urllib.request.Request(
               url,
               data=json.dumps(payload).encode("utf-8"),
-              headers={"Content-Type": "application/json"},
+              headers={
+                  "Content-Type": "application/json",
+                  "User-Agent": "BorisBrejchaConcertMonitor/1.0"
+              },
               method="POST"
           )
-
-          with urllib.request.urlopen(request, timeout=20) as response:
-              print("Discord webhook HTTP status:", response.status)
+          try:
+              with urllib.request.urlopen(request, timeout=20) as response:
+                  print("Discord HTTP status:", response.status)
+          except urllib.error.HTTPError as error:
+              print("Discord HTTP status:", error.code)
+              print("Response:", error.read().decode("utf-8", errors="replace")[:500])
+              raise
           PY
 
       - name: Check concert dates
