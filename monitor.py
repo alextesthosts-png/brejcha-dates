@@ -109,40 +109,110 @@ def safe_ticket_url(raw):
 
 
 def resolve_ticket_url(raw):
-    """Best-effort resolution; never click checkout or submit forms.
+    """Resolve explicit ticket links; never treat a generic event URL as tickets."""
+    return resolve_ticket_url_http(raw)
 
-    HTTP redirects first, then one short browser navigation for JS redirects.
-    Any failure falls back to an empty direct URL (event details remain intact).
+
+# Ticket CTA discovery: a Bandsintown /e/ event URL is NOT a ticket URL.
+# Visit the event page, find its Tickets/Buy CTA, and follow that link only.
+TICKET_CTA_RE = re.compile(r"\b(tickets?|buy tickets?|get tickets?|book tickets?|entradas|billets|karten|boletos)\b", re.I)
+TRACKING_RE = re.compile(r"^https://(?:[^/]+\.)?bandsintown\.com/t/", re.I)
+EVENT_PAGE_RE = re.compile(r"^https://(?:[^/]+\.)?bandsintown\.com/(?:e/|event/)", re.I)
+
+
+def ticket_cta_candidates(page):
+    """Read actual anchors/buttons from a rendered event page, including frames.
+
+    Do not treat arbitrary outbound links or RSVP controls as ticket links.
     """
-    raw = str(raw or "").strip()
-    if not raw.startswith("https://"):
-        return ""
-    host = (urlparse(raw).hostname or "").lower()
-    if not (host == "bandsintown.com" or host.endswith(".bandsintown.com")):
-        return safe_ticket_url(raw)
-    try:
-        response = requests.get(raw, timeout=9, allow_redirects=True,
-                                headers={"User-Agent": "Mozilla/5.0"}, stream=True)
-        dest = safe_ticket_url(response.url)
-        response.close()
-        if dest:
-            return dest
-    except requests.RequestException:
-        pass
+    found = []
+    for frame in page.frames:
+        try:
+            items = frame.locator('a[href]').evaluate_all("""els => els.map(a => ({
+              href: a.href,
+              text: (a.innerText || a.getAttribute('aria-label') || a.getAttribute('title') || '').trim(),
+              label: (a.getAttribute('data-testid') || '')
+            }))""")
+        except Exception:
+            continue
+        for item in items:
+            href = item.get('href', '')
+            label = (item.get('text', '') + ' ' + item.get('label', '')).strip()
+            if not href.startswith('https://') or not TICKET_CTA_RE.search(label):
+                continue
+            # Prefer a dedicated ticket-tracking URL; don't take the /e/ details URL.
+            if EVENT_PAGE_RE.match(href):
+                continue
+            rank = 0 if TRACKING_RE.match(href) else 1
+            found.append((rank, href))
+    return [href for _, href in sorted(set(found))]
+
+
+def discover_event_ticket_urls(events):
+    """Enrich every missing concert, including existing events, best effort.
+
+    One Chromium session, limited per-page timeout; failures never block alerts.
+    This is intentionally separate from Discord/Telegram and event identity.
+    """
+    missing = [e for e in events if not e.get('ticket_url') and EVENT_PAGE_RE.match(e.get('url', ''))]
+    if not missing:
+        return
+    print(f'Ticket discovery: checking {len(missing)} event pages with missing direct links')
     try:
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(headless=True)
-            context = browser.new_context()
+            context = browser.new_context(locale='en-US')
             page = context.new_page()
-            try:
-                page.goto(raw, wait_until="domcontentloaded", timeout=12000)
-                page.wait_for_timeout(1800)
-                return safe_ticket_url(page.url)
-            finally:
-                browser.close()
+            for index, event in enumerate(missing, 1):
+                try:
+                    page.goto(event['url'], wait_until='domcontentloaded', timeout=14000)
+                    page.wait_for_timeout(1200)
+                    candidates = ticket_cta_candidates(page)
+                    for candidate in candidates[:4]:
+                        direct = resolve_ticket_url_http(candidate)
+                        if direct:
+                            event['ticket_url'] = direct
+                            event['ticket_provider'] = urlparse(direct).hostname or ''
+                            break
+                    print(f"Ticket discovery {index}/{len(missing)}: "
+                          f"{'found ' + event['ticket_provider'] if event.get('ticket_url') else 'not available'} "
+                          f"({event['id']})")
+                except Exception as exc:
+                    print(f"Ticket discovery {index}/{len(missing)} skipped ({type(exc).__name__})")
+            browser.close()
     except Exception as exc:
-        print(f"Ticket redirect could not be resolved: {type(exc).__name__}")
-        return ""
+        print(f'Ticket discovery unavailable ({type(exc).__name__}); preserving concert state')
+
+
+def resolve_ticket_url_http(raw):
+    """Resolve a dedicated CTA without navigating to arbitrary untrusted hosts.
+
+    Only make an outbound request to Bandsintown tracking URLs. External
+    direct HTTPS ticket URLs are validated, not fetched by the monitor.
+    """
+    direct = safe_ticket_url(raw)
+    if direct:
+        return direct
+    if not TRACKING_RE.match(str(raw or '')):
+        return ''
+    try:
+        # Redirect hops are checked before requests to avoid contacting private hosts.
+        current = raw
+        for _ in range(7):
+            host = (urlparse(current).hostname or '').lower()
+            if host != 'bandsintown.com' and not host.endswith('.bandsintown.com'):
+                return safe_ticket_url(current)
+            response = requests.get(current, timeout=8, allow_redirects=False,
+                                    headers={'User-Agent': 'Mozilla/5.0'}, stream=True)
+            location = response.headers.get('Location', '')
+            status = response.status_code
+            response.close()
+            if status not in (301, 302, 303, 307, 308) or not location:
+                break
+            current = urljoin(current, location)
+        return safe_ticket_url(current) if current != raw else ''
+    except requests.RequestException:
+        return ''
 
 
 def enrich_tickets(events):
@@ -172,6 +242,9 @@ def enrich_tickets(events):
             event["ticket_provider"] = urlparse(event["ticket_url"]).hostname or ""
         else:
             event["ticket_provider"] = ""
+    discover_event_ticket_urls(events)
+    found = sum(bool(e.get("ticket_url")) for e in events)
+    print(f"Ticket discovery summary: {found}/{len(events)} events have direct ticket URLs")
     return events
 
 def extract_jsonld(soup):
