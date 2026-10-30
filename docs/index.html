@@ -205,14 +205,19 @@ a { color: inherit; text-decoration: none; }
   color: var(--neon-cyan);
 }
 
-/* Futuristic Hero Section */
+/* Futuristic Hero Section — full-width title, balanced panels */
 .hero {
   display: grid;
-  grid-template-columns: 1.4fr 1fr;
-  gap: 32px;
-  align-items: center;
+  grid-template-columns: minmax(0, 1.65fr) minmax(280px, 1fr);
+  gap: 22px;
+  align-items: stretch;
   padding: 48px 0 36px;
 }
+.hero-title { grid-column: 1 / -1; min-width: 0; }
+.hero > .countdown-box, .hero > .facts-panel { min-width: 0; }
+.hero > .facts-panel { align-self: stretch; }
+.hero .facts li { min-width: 0; overflow-wrap: break-word; align-items: flex-start; }
+.hero .facts li::before { flex: 0 0 auto; }
 
 .hero-tag {
   font-family: var(--font-mono);
@@ -228,17 +233,20 @@ a { color: inherit; text-decoration: none; }
 
 .hero-headline {
   font-family: var(--font-hud);
-  font-size: clamp(2rem, 3.5vw, 3.5rem);
+  font-size: clamp(2rem, 4.2vw, 3.7rem);
   font-weight: 900;
-  line-height: 1.1;
+  line-height: 1.12;
   text-transform: uppercase;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
+  letter-spacing: 0.025em;
+  white-space: normal;
+  overflow-wrap: normal;
   background: linear-gradient(135deg, #ffffff 40%, var(--neon-cyan) 80%, var(--neon-violet) 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
-  margin-bottom: 24px;
+  margin-bottom: 0;
 }
+.hero-headline span { display: block; }
 
 .countdown-box {
   background: var(--bg-card);
@@ -692,6 +700,8 @@ footer {
 /* Responsive Media Queries */
 @media (max-width: 992px) {
   .hero { grid-template-columns: 1fr; }
+  .hero-title { grid-column: 1; }
+  .hero-headline { font-size: clamp(1.7rem, 5vw, 3rem); }
   .bar { grid-template-columns: 1fr 1fr; }
   .budgetfields { grid-template-columns: 1fr 1fr; }
 }
@@ -707,6 +717,9 @@ footer {
   .bar { grid-template-columns: 1fr; }
   .budgetfields { grid-template-columns: 1fr; }
   .header-actions { display: none; }
+  .hero { gap: 16px; padding-top: 32px; }
+  .hero-headline { font-size: clamp(1.35rem, 6vw, 2.3rem); letter-spacing: 0.01em; }
+  .countdown-box, .facts-panel { padding: 18px; }
 }
 </style>
 </head>
@@ -732,22 +745,18 @@ footer {
 
   <!-- Futuristic Hero Section -->
   <section class="hero" aria-live="polite">
-    <div>
+    <div class="hero-title">
       <p class="hero-tag">High-tech minimal</p>
-      <h1 class="hero-headline">Boris Brejcha Concert Monitor</h1>
-      <div class="countdown-box">
-        <p class="kick">▶ Next Upcoming Performance</p>
-        <p class="count" id="count">Loading…</p>
-        <p class="where" id="where">Loading verified concert data…</p>
-      </div>
+      <h1 class="hero-headline"><span>Boris Brejcha</span><span>Concert Monitor</span></h1>
+    </div>
+    <div class="countdown-box">
+      <p class="kick">▶ Next Upcoming Performance</p>
+      <p class="count" id="count">Loading…</p>
+      <p class="where" id="where">Loading verified concert data…</p>
     </div>
     <div class="facts-panel">
-      <div class="facts-header">
-        <span>HUD // TELEMETRY</span>
-      </div>
-      <ul class="facts" id="facts">
-        <li>Loading concert data…</li>
-      </ul>
+      <div class="facts-header"><span>HUD // TELEMETRY</span></div>
+      <ul class="facts" id="facts"><li>Loading concert data…</li></ul>
     </div>
   </section>
 
