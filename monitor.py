@@ -347,6 +347,24 @@ BROWSER_UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
               "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
 BROWSER_ARGS = ["--disable-blink-features=AutomationControlled"]
 TRACKING_DEBUG = Path("data/tracking_debug.json")
+
+# Hard limits so a blocked/slow ticket site can never stall the whole job.
+TICKET_BUDGET_S = float(os.getenv("TICKET_BUDGET_S", "150"))   # total time for all ticket lookups
+MAX_CONSECUTIVE_FAILS = 3                                      # then stop trying browser lookups
+_BUDGET = {"deadline": None, "fails": 0, "t0": time.monotonic()}
+_FAILED_LINKS = set()  # never retry a link that already failed in this run
+
+
+def _budget_start():
+    _BUDGET.update(deadline=time.monotonic() + TICKET_BUDGET_S, fails=0, t0=time.monotonic())
+
+
+def _time_ok():
+    return _BUDGET["deadline"] is None or time.monotonic() < _BUDGET["deadline"]
+
+
+def _budget_ok():
+    return _time_ok() and _BUDGET["fails"] < MAX_CONSECUTIVE_FAILS
 # Interstitial pages sometimes redirect with JS or <meta refresh> instead of an HTTP 302.
 JS_REDIRECT_RE = re.compile(
     r"""(?:location(?:\.href)?\s*=\s*|location\.(?:replace|assign)\(\s*|url=)["']?(https?:(?:\\?/){2}[^"'\s<>)]+)""",
@@ -358,7 +376,22 @@ def _is_bandsintown(url):
     return host == "bandsintown.com" or host.endswith(".bandsintown.com")
 
 
-def resolve_tracking_in_browser(context, tracking_url, timeout_ms=20000):
+def resolve_tracking_in_browser(context, tracking_url, timeout_ms=8000):
+    """Budgeted wrapper: 8 s per link, stops after 3 failures in a row or when time is up."""
+    if tracking_url in _FAILED_LINKS:
+        return "", "skipped_already_failed", []
+    if not _budget_ok():
+        return "", "skipped_budget", []
+    if _BUDGET["deadline"] is not None:
+        timeout_ms = int(min(timeout_ms, max(1000, (_BUDGET["deadline"] - time.monotonic()) * 1000)))
+    result = _resolve_tracking_in_browser(context, tracking_url, timeout_ms)
+    _BUDGET["fails"] = 0 if result[0] else _BUDGET["fails"] + 1
+    if not result[0]:
+        _FAILED_LINKS.add(tracking_url)
+    return result
+
+
+def _resolve_tracking_in_browser(context, tracking_url, timeout_ms):
     """Open a Bandsintown /t/ link like a visitor and report where it ends up.
 
     Returns (direct_url, method, hosts_visited). Waits for the redirect to finish, which the
@@ -366,6 +399,7 @@ def resolve_tracking_in_browser(context, tracking_url, timeout_ms=20000):
     """
     page = context.new_page()
     visited = []
+    t0 = time.monotonic()
     page.on("framenavigated", lambda frame: visited.append(frame.url) if frame == page.main_frame else None)
     try:
         try:
@@ -374,7 +408,7 @@ def resolve_tracking_in_browser(context, tracking_url, timeout_ms=20000):
             pass  # aborted/slow navigations are fine; we inspect where we ended up
         try:
             page.wait_for_url(lambda u: u.startswith("http") and not _is_bandsintown(u),
-                              timeout=timeout_ms, wait_until="commit")
+                              timeout=max(500, timeout_ms - int((time.monotonic() - t0) * 1000)), wait_until="commit")
         except Exception:
             pass
         hosts = []
@@ -387,10 +421,12 @@ def resolve_tracking_in_browser(context, tracking_url, timeout_ms=20000):
                 final = safe_ticket_url(url)
                 if final:
                     return final, "browser_redirect", hosts
-        try:
-            html = page.content()
-        except Exception:
-            html = ""
+        html = ""
+        if any(u.startswith("http") for u in visited):  # content() would block on a navigation that never committed
+            try:
+                html = page.content()
+            except Exception:
+                html = ""
         for m in JS_REDIRECT_RE.finditer(html):
             target = urljoin(page.url, m.group(1).replace("\\/", "/"))
             if not _is_bandsintown(target):
@@ -473,7 +509,7 @@ def discover_official_tickets(events):
                     method = 'http' if direct else ''
                     if not direct and TRACKING_RE.match(href):
                         direct, method, _ = resolve_tracking_in_browser(context, href)
-                    if not direct:
+                    if not direct and _budget_ok():
                         # Last resort: refresh and click the real button: previous click can navigate away.
                         _load_official_page(page)
                         fresh = []
@@ -523,8 +559,11 @@ def discover_event_ticket_urls(events):
             context = browser.new_context(locale='en-US', user_agent=BROWSER_UA)
             page = context.new_page()
             for index, event in enumerate(missing, 1):
+                if not _time_ok():
+                    print('Ticket discovery: time budget used up, skipping the rest')
+                    break
                 try:
-                    page.goto(event['url'], wait_until='domcontentloaded', timeout=14000)
+                    page.goto(event['url'], wait_until='domcontentloaded', timeout=10000)
                     page.wait_for_timeout(1200)
                     candidates = ticket_cta_candidates(page)
                     for candidate in candidates[:4]:
@@ -557,6 +596,8 @@ def resolve_ticket_url_http(raw):
         return direct
     if not TRACKING_RE.match(str(raw or '')):
         return ''
+    if not _time_ok():
+        return ''
     try:
         # Redirect hops are checked before requests to avoid contacting private hosts.
         current = raw
@@ -564,7 +605,7 @@ def resolve_ticket_url_http(raw):
             host = (urlparse(current).hostname or '').lower()
             if host != 'bandsintown.com' and not host.endswith('.bandsintown.com'):
                 return safe_ticket_url(current)
-            response = requests.get(current, timeout=8, allow_redirects=False,
+            response = requests.get(current, timeout=5, allow_redirects=False,
                                     headers={'User-Agent': 'Mozilla/5.0'}, stream=True)
             location = response.headers.get('Location', '')
             status = response.status_code
@@ -579,6 +620,7 @@ def resolve_ticket_url_http(raw):
 
 def enrich_tickets(events):
     """Enrich only event records, without changing event IDs or alert logic."""
+    _budget_start()
     overrides = {}
     if TICKET_OVERRIDES.exists():
         try:
@@ -610,7 +652,8 @@ def enrich_tickets(events):
     discover_event_ticket_urls(events)
     resolve_tracking_urls(events)
     found = sum(bool(e.get("ticket_url")) for e in events)
-    print(f"Ticket discovery summary: {found}/{len(events)} events have direct ticket URLs")
+    print(f"Ticket discovery summary: {found}/{len(events)} events have direct ticket URLs "
+          f"({time.monotonic() - _BUDGET['t0']:.0f}s, browser failures in a row: {_BUDGET['fails']})")
     return events
 
 # ---------------------------------------------------------------------------
@@ -620,6 +663,7 @@ def enrich_tickets(events):
 HOME_AIRPORT = os.getenv("HOME_AIRPORT", "WAW")
 HOME_COORDS = (float(os.getenv("HOME_LAT", "52.1657")), float(os.getenv("HOME_LON", "20.9671")))
 GEOCODE_CACHE = Path("data/geocode_cache.json")
+_GEO_CALLS = [0]  # max 20 new lookups per run
 
 
 def _haversine_km(a, b):
@@ -633,14 +677,18 @@ def _geocode(place, cache):
     key = place.casefold()
     if key in cache:
         return cache[key]
+    if _GEO_CALLS[0] >= 20:
+        return None
+    _GEO_CALLS[0] += 1
     try:
         r = requests.get("https://nominatim.openstreetmap.org/search",
                          params={"q": place, "format": "json", "limit": 1},
-                         headers={"User-Agent": "BorisBrejchaConcertMonitor/1.0"}, timeout=15)
+                         headers={"User-Agent": "BorisBrejchaConcertMonitor/1.0"}, timeout=8)
         data = r.json()
         coords = [float(data[0]["lat"]), float(data[0]["lon"])] if data else None
     except (requests.RequestException, ValueError, KeyError, IndexError, TypeError):
-        return None  # network problem: do not cache, retry next run
+        _GEO_CALLS[0] = 99  # network problem: stop geocoding this run, retry next run
+        return None
     cache[key] = coords
     time.sleep(1.1)
     return coords
@@ -1126,6 +1174,10 @@ def main():
 
 
 if __name__ == "__main__":
+    try:
+        sys.stdout.reconfigure(line_buffering=True)  # show logs live in GitHub Actions
+    except Exception:
+        pass
     try:
         main()
     except Exception as exc:
