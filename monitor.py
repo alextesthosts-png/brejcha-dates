@@ -3,14 +3,15 @@
 
 import hashlib
 import json
+import math
 import os
 import re
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import urljoin, urlparse
-from urllib.parse import parse_qs, unquote
+from urllib.parse import parse_qs, quote_plus, unquote
 
 import requests
 from bs4 import BeautifulSoup
@@ -210,12 +211,33 @@ def _event_reference_ids(text):
     for value in re.findall(r'https?://[^\s\"<>]+', str(text or '')):
         value = value.rstrip('),;')
         parsed = urlparse(value)
-        m = re.search(r'/(?:e|event)/(\d+)', parsed.path)
+        m = re.search(r'/(?:e|event|t)/(\d+)', parsed.path)  # /t/<id> = ticket tracking link
         if m:
             ids.add(m.group(1))
         for key in ('event_id', 'eventId'):
             ids.update(x for x in parse_qs(parsed.query).get(key, []) if x.isdigit())
     return ids
+
+
+MONTHS = {m: i for i, m in enumerate(
+    ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"], 1)}
+_MON = r"(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?"
+
+
+def _dates_in_text(text):
+    """Return every date found in text as ISO strings (handles 'Aug. 07 2027', '7 Aug 2027',
+    '2027-08-07', '07.08.2027')."""
+    text = str(text or "")
+    found = set()
+    for m in re.finditer(_MON + r"\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(20\d{2})\b", text, re.I):
+        found.add(f"{m.group(3)}-{MONTHS[m.group(1).lower()]:02d}-{int(m.group(2)):02d}")
+    for m in re.finditer(r"\b(\d{1,2})(?:st|nd|rd|th)?\s+" + _MON + r",?\s+(20\d{2})\b", text, re.I):
+        found.add(f"{m.group(3)}-{MONTHS[m.group(2).lower()]:02d}-{int(m.group(1)):02d}")
+    for m in re.finditer(r"\b(20\d{2})-(\d{2})-(\d{2})\b", text):
+        found.add(m.group(0))
+    for m in re.finditer(r"\b(\d{1,2})\.(\d{1,2})\.(20\d{2})\b", text):
+        found.add(f"{m.group(3)}-{int(m.group(2)):02d}-{int(m.group(1)):02d}")
+    return found
 
 
 def _match_official_ctas(events, items):
@@ -236,16 +258,10 @@ def _match_official_ctas(events, items):
             candidates = [e for e in events if references & _event_reference_ids(e.get('url', ''))]
         if not candidates:
             context = ' '.join([item.get('context', '')] + item.get('times', []) + item.get('attrs', [])).casefold()
+            context_dates = _dates_in_text(context)
             for e in events:
-                date = e.get('date', '')[:10]
-                if not date:
-                    continue
-                # Date formats are often 2027-08-07 or 07.08.2027 in the widget.
-                ymd = date.split('-')
-                forms = [date]
-                if len(ymd) == 3:
-                    forms += [f'{ymd[2]}.{ymd[1]}.{ymd[0]}', f'{int(ymd[2])}.{int(ymd[1])}.{ymd[0]}']
-                if not any(f.casefold() in context for f in forms):
+                event_dates = _dates_in_text(e.get('date', '')) or ({e['date'][:10]} if e.get('date') else set())
+                if not (event_dates & context_dates):
                     continue
                 # Require venue or a distinctive title token; date alone can be ambiguous.
                 venue = re.sub(r'^boris brejcha\s*@\s*', '', e.get('title', ''), flags=re.I).strip().casefold()
@@ -327,6 +343,100 @@ def _resolve_by_click(context, page, frame_index, element_index):
                 pass
 
 
+BROWSER_UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+              "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+BROWSER_ARGS = ["--disable-blink-features=AutomationControlled"]
+TRACKING_DEBUG = Path("data/tracking_debug.json")
+# Interstitial pages sometimes redirect with JS or <meta refresh> instead of an HTTP 302.
+JS_REDIRECT_RE = re.compile(
+    r"""(?:location(?:\.href)?\s*=\s*|location\.(?:replace|assign)\(\s*|url=)["']?(https?:(?:\\?/){2}[^"'\s<>)]+)""",
+    re.I)
+
+
+def _is_bandsintown(url):
+    host = (urlparse(url).hostname or "").lower()
+    return host == "bandsintown.com" or host.endswith(".bandsintown.com")
+
+
+def resolve_tracking_in_browser(context, tracking_url, timeout_ms=20000):
+    """Open a Bandsintown /t/ link like a visitor and report where it ends up.
+
+    Returns (direct_url, method, hosts_visited). Waits for the redirect to finish, which the
+    old click code did not (it checked the URL after 1.8 s while still on bandsintown.com).
+    """
+    page = context.new_page()
+    visited = []
+    page.on("framenavigated", lambda frame: visited.append(frame.url) if frame == page.main_frame else None)
+    try:
+        try:
+            page.goto(tracking_url, wait_until="commit", timeout=timeout_ms)
+        except Exception:
+            pass  # aborted/slow navigations are fine; we inspect where we ended up
+        try:
+            page.wait_for_url(lambda u: u.startswith("http") and not _is_bandsintown(u),
+                              timeout=timeout_ms, wait_until="commit")
+        except Exception:
+            pass
+        hosts = []
+        for u in visited + [page.url]:
+            h = urlparse(u).hostname
+            if h and h not in hosts:
+                hosts.append(h)
+        for url in [page.url] + list(reversed(visited)):
+            if url.startswith("http") and not _is_bandsintown(url):
+                final = safe_ticket_url(url)
+                if final:
+                    return final, "browser_redirect", hosts
+        try:
+            html = page.content()
+        except Exception:
+            html = ""
+        for m in JS_REDIRECT_RE.finditer(html):
+            target = urljoin(page.url, m.group(1).replace("\\/", "/"))
+            if not _is_bandsintown(target):
+                final = safe_ticket_url(target)
+                if final:
+                    return final, "page_redirect", hosts
+        low = html.lower()
+        if any(w in low for w in ("captcha", "access denied", "verify you are", "are you a robot", "unusual traffic")):
+            return "", "blocked_by_bot_check", hosts
+        return "", "no_redirect", hosts
+    except Exception as exc:
+        return "", f"nav_{type(exc).__name__}", []
+    finally:
+        try:
+            page.close()
+        except Exception:
+            pass
+
+
+def resolve_tracking_urls(events):
+    """Resolve every event that still only has a Bandsintown /t/ link."""
+    todo = [e for e in events if not e.get("ticket_url") and TRACKING_RE.match(e.get("ticket_tracking_url", ""))]
+    if not todo:
+        return
+    print(f"Tracking-link resolution: {len(todo)} events")
+    debug = []
+    try:
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(headless=True, args=BROWSER_ARGS)
+            context = browser.new_context(locale="en-US", user_agent=BROWSER_UA)
+            try:
+                for event in todo:
+                    direct, method, hosts = resolve_tracking_in_browser(context, event["ticket_tracking_url"])
+                    if direct:
+                        event["ticket_url"] = direct
+                        event["ticket_provider"] = urlparse(direct).hostname or ""
+                    print(f"Tracking resolution {event['id']}: {event.get('ticket_provider') or 'unresolved'} ({method})")
+                    debug.append({"event_id": event["id"], "method": method, "hosts": hosts})
+            finally:
+                browser.close()
+    except Exception as exc:
+        print(f"Tracking resolution unavailable ({type(exc).__name__})")
+    TRACKING_DEBUG.parent.mkdir(parents=True, exist_ok=True)
+    TRACKING_DEBUG.write_text(json.dumps(debug, indent=2) + "\n", encoding="utf-8")
+
+
 def discover_official_tickets(events):
     """Match official ticket buttons, then click them in a real browser.
 
@@ -339,8 +449,8 @@ def discover_official_tickets(events):
     resolved = 0
     try:
         with sync_playwright() as playwright:
-            browser = playwright.chromium.launch(headless=True)
-            context = browser.new_context(locale='en-US', accept_downloads=False)
+            browser = playwright.chromium.launch(headless=True, args=BROWSER_ARGS)
+            context = browser.new_context(locale='en-US', accept_downloads=False, user_agent=BROWSER_UA)
             page = context.new_page()
             try:
                 _load_official_page(page)
@@ -353,6 +463,7 @@ def discover_official_tickets(events):
                     if event.get('ticket_url') or event['id'] not in matches:
                         continue
                     href = matches[event['id']]
+                    event['ticket_tracking_url'] = href  # dashboard fallback if resolution fails
                     candidates = [item for item in items if _ticket_href(item) == href]
                     if len(candidates) != 1:
                         diagnostics.append({'result': 'duplicate_button', 'event_id': event['id']})
@@ -360,8 +471,10 @@ def discover_official_tickets(events):
                     item = candidates[0]
                     direct = resolve_ticket_url_http(href)
                     method = 'http' if direct else ''
+                    if not direct and TRACKING_RE.match(href):
+                        direct, method, _ = resolve_tracking_in_browser(context, href)
                     if not direct:
-                        # Refresh before each click: previous click can navigate away.
+                        # Last resort: refresh and click the real button: previous click can navigate away.
                         _load_official_page(page)
                         fresh = []
                         for frame_index, frame in enumerate(page.frames):
@@ -406,8 +519,8 @@ def discover_event_ticket_urls(events):
     print(f'Ticket discovery: checking {len(missing)} event pages with missing direct links')
     try:
         with sync_playwright() as playwright:
-            browser = playwright.chromium.launch(headless=True)
-            context = browser.new_context(locale='en-US')
+            browser = playwright.chromium.launch(headless=True, args=BROWSER_ARGS)
+            context = browser.new_context(locale='en-US', user_agent=BROWSER_UA)
             page = context.new_page()
             for index, event in enumerate(missing, 1):
                 try:
@@ -420,6 +533,9 @@ def discover_event_ticket_urls(events):
                             event['ticket_url'] = direct
                             event['ticket_provider'] = urlparse(direct).hostname or ''
                             break
+                    if not event.get('ticket_url') and candidates and TRACKING_RE.match(candidates[0]):
+                        if not event.get('ticket_tracking_url'):
+                            event['ticket_tracking_url'] = candidates[0]
                     print(f"Ticket discovery {index}/{len(missing)}: "
                           f"{'found ' + event['ticket_provider'] if event.get('ticket_url') else 'not available'} "
                           f"({event['id']})")
@@ -482,6 +598,8 @@ def enrich_tickets(events):
                     manual = safe_ticket_url(destination)
                     break
         candidate = event.get("ticket_url", "")
+        if TRACKING_RE.match(candidate) and not event.get("ticket_tracking_url"):
+            event["ticket_tracking_url"] = candidate
         # Do not visit a generic Bandsintown event-details page; it is not a ticket CTA.
         event["ticket_url"] = manual or resolve_ticket_url(candidate)
         if event["ticket_url"]:
@@ -490,9 +608,109 @@ def enrich_tickets(events):
             event["ticket_provider"] = ""
     discover_official_tickets(events)
     discover_event_ticket_urls(events)
+    resolve_tracking_urls(events)
     found = sum(bool(e.get("ticket_url")) for e in events)
     print(f"Ticket discovery summary: {found}/{len(events)} events have direct ticket URLs")
     return events
+
+# ---------------------------------------------------------------------------
+# Flight cost ESTIMATE (heuristic, not a live fare). Home airport is configurable:
+#   HOME_AIRPORT=WAW HOME_LAT=52.1657 HOME_LON=20.9671
+# ---------------------------------------------------------------------------
+HOME_AIRPORT = os.getenv("HOME_AIRPORT", "WAW")
+HOME_COORDS = (float(os.getenv("HOME_LAT", "52.1657")), float(os.getenv("HOME_LON", "20.9671")))
+GEOCODE_CACHE = Path("data/geocode_cache.json")
+
+
+def _haversine_km(a, b):
+    la1, lo1, la2, lo2 = map(math.radians, (a[0], a[1], b[0], b[1]))
+    h = math.sin((la2 - la1) / 2) ** 2 + math.cos(la1) * math.cos(la2) * math.sin((lo2 - lo1) / 2) ** 2
+    return 2 * 6371 * math.asin(math.sqrt(h))
+
+
+def _geocode(place, cache):
+    """OpenStreetMap Nominatim lookup, cached on disk (1 request/second policy)."""
+    key = place.casefold()
+    if key in cache:
+        return cache[key]
+    try:
+        r = requests.get("https://nominatim.openstreetmap.org/search",
+                         params={"q": place, "format": "json", "limit": 1},
+                         headers={"User-Agent": "BorisBrejchaConcertMonitor/1.0"}, timeout=15)
+        data = r.json()
+        coords = [float(data[0]["lat"]), float(data[0]["lon"])] if data else None
+    except (requests.RequestException, ValueError, KeyError, IndexError, TypeError):
+        return None  # network problem: do not cache, retry next run
+    cache[key] = coords
+    time.sleep(1.1)
+    return coords
+
+
+def estimate_flight(event, cache):
+    """Rough economy return fare in EUR from HOME_AIRPORT, based on great-circle distance."""
+    dates = sorted(_dates_in_text(event.get("date", "")))
+    if not dates:
+        return {}
+    d1 = dates[0]
+    if datetime.strptime(d1, "%Y-%m-%d") < datetime.now() - timedelta(days=1):
+        return {}
+    try:
+        dest = (float(event.get("lat") or ""), float(event.get("lon") or ""))
+    except ValueError:
+        dest = None
+    parts = [x.strip() for x in event.get("location", "").split(",") if x.strip()]
+    place = event.get("city") or ", ".join(parts[-2:]) or event.get("location", "")
+    if not dest:
+        for query in (event.get("city"), event.get("location"), ", ".join(parts[-2:])):
+            if query:
+                dest = _geocode(query, cache)
+                if dest:
+                    break
+    if not dest:
+        return {}
+    km = round(_haversine_km(HOME_COORDS, dest))
+    d2 = (datetime.strptime(d1, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
+    out = {
+        "flight_from": HOME_AIRPORT,
+        "flight_km": km,
+        "flight_search_url": "https://www.google.com/travel/flights?q=" + quote_plus(
+            f"Flights from {HOME_AIRPORT} to {place} on {d1} through {d2}"),
+    }
+    if km < 250:
+        out["flight_note"] = "Under ~250 km: train or car is probably better than flying"
+    else:
+        if km <= 4000:
+            low, high = 40 + 0.05 * km, 80 + 0.12 * km
+        else:
+            low, high = 200 + 0.06 * km, 350 + 0.14 * km
+        out["flight_est_eur_low"] = int(round(low / 5) * 5)
+        out["flight_est_eur_high"] = int(round(high / 5) * 5)
+    return out
+
+
+def enrich_flights(events):
+    """Best effort: never blocks alerts."""
+    cache = {}
+    if GEOCODE_CACHE.exists():
+        try:
+            cache = json.loads(GEOCODE_CACHE.read_text(encoding="utf-8"))
+        except (ValueError, OSError):
+            cache = {}
+    before = len(cache)
+    try:
+        for event in events:
+            event.update(estimate_flight(event, cache))
+    except Exception as exc:
+        print(f"Flight estimate unavailable ({type(exc).__name__})")
+    if len(cache) != before:
+        GEOCODE_CACHE.parent.mkdir(parents=True, exist_ok=True)
+        GEOCODE_CACHE.write_text(json.dumps(cache, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+def best_link(event):
+    """Direct ticket seller > Bandsintown tracking link (redirects to seller) > event page."""
+    return event.get("ticket_url") or event.get("ticket_tracking_url") or event.get("url") or URL
+
 
 def extract_jsonld(soup):
     events = []
@@ -508,6 +726,7 @@ def extract_jsonld(soup):
 
             if any(str(k).lower().endswith("event") for k in kinds):
                 loc = obj.get("location") or {}
+                city = lat = lon = ""
 
                 if isinstance(loc, list):
                     loc = loc[0] if loc else {}
@@ -524,6 +743,10 @@ def extract_jsonld(soup):
                     else:
                         addr = str(addr)
 
+                    city = normalize(addr)
+                    geo = loc.get("geo")
+                    if isinstance(geo, dict):
+                        lat, lon = geo.get("latitude", ""), geo.get("longitude", "")
                     location = normalize(
                         " ".join(
                             x for x in (loc.get("name", ""), addr) if x
@@ -543,6 +766,7 @@ def extract_jsonld(soup):
                         "url": canonical_url(obj.get("url")) or URL,
                         "ticket_url": ticket_link(obj),
                         "organizer": entity_name(obj.get("organizer")),
+                        "city": city, "lat": lat, "lon": lon,
                     })
 
             for val in obj.values():
@@ -697,7 +921,7 @@ def send_discord(event, webhook):
         f"🎵 **Event:** {event['title'][:180]}\n"
         f"📍 **Location:** "
         f"{event['location'][:180] or 'See event page'}\n"
-        f"🔗 {event['url'] or URL}"
+        f"🔗 {best_link(event)}"
     )
 
     payload = {
@@ -746,7 +970,7 @@ def send_telegram(event, bot_token, chat_id):
         f"📅 Date: {event['date']}\n"
         f"🎵 Event: {event['title'][:180]}\n"
         f"📍 Location: {event['location'][:180] or 'See event page'}\n"
-        f"🔗 {event['url'] or URL}"
+        f"🔗 {best_link(event)}"
     )
     # Telegram's Bot API returns HTTP 200 with {"ok": false} in some errors.
     # Avoid including the token-bearing URL in exception messages.
@@ -833,9 +1057,17 @@ def main():
     old_events = {e.get("id"): e for e in (previous or {}).get("current_events", []) if isinstance(e, dict)}
     for event in events:
         old = old_events.get(event["id"], {})
-        if not event.get("ticket_url") and old.get("ticket_url"):
-            event["ticket_url"] = old["ticket_url"]
+        raw = event.get("ticket_url", "")
+        if TRACKING_RE.match(raw):
+            event["ticket_tracking_url"] = raw
+        elif old.get("ticket_tracking_url"):
+            event["ticket_tracking_url"] = old["ticket_tracking_url"]
+        # Reuse a previously resolved seller URL (delete it from events.json to force a refresh).
+        cached = safe_ticket_url(old.get("ticket_url", ""))
+        if cached and (not raw or TRACKING_RE.match(raw)):
+            event["ticket_url"] = cached
     enrich_tickets(events)
+    enrich_flights(events)
     current = {event["id"] for event in events}
 
     if previous is None:
