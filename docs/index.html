@@ -1,77 +1,837 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#101116"><meta name="description" content="Unofficial Boris Brejcha tour tracker">
-<title>Boris Brejcha tour tracker</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800&family=Hanken+Grotesk:wght@400;600;700&display=swap">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#05070b">
+<meta name="description" content="Boris Brejcha Futuristic Cybernetic Tour HUD">
+<title>Boris Brejcha — Futuristic Tour HUD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800;900&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+
 <style>
-:root{--page:#101116;--panel:#1a1c25;--line:#2c2f3b;--bone:#eeece4;--bone2:#e2dfd4;--ink:#14151b;--soft:#5f5e58;--uv:#5a48ff;--amber:#ffb547;--txt:#ecebf2;--mut:#a4a7b8;--sw:92px;color-scheme:dark;
---disp:'Big Shoulders Display','Barlow Condensed','Arial Narrow',Impact,sans-serif;--body:'Hanken Grotesk',system-ui,-apple-system,'Segoe UI',sans-serif}
-*{box-sizing:border-box}body{margin:0;background:var(--page);color:var(--txt);font:16px/1.5 var(--body)}
-.wrap{max-width:1040px;margin:auto;padding:24px 18px 70px}a{color:inherit}p{margin:0}
-:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
-.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.brand{font-weight:700;color:var(--mut)}
-.btn{display:inline-block;padding:9px 14px;border-radius:9px;border:1.5px solid var(--ink);font-weight:700;font-size:.9rem;text-decoration:none;color:var(--ink);background:transparent}
-.btn:hover{background:rgba(20,21,27,.08)}.btn.p{background:var(--uv);border-color:var(--uv);color:#fff}.btn.p:hover{background:#4636e6}
-.btn.ghost{border-color:#555a70;color:var(--txt)}.btn.ghost:hover{background:#232634}
-.hero{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:end;padding:44px 0 30px}
-.kick{color:var(--mut);font-weight:600}.count{font:800 clamp(4.2rem,15vw,9.5rem)/.9 var(--disp);color:var(--amber);margin:4px 0 10px}
-.where{font-size:1.25rem;font-weight:600;max-width:34ch}.facts{list-style:none;margin:0;padding:0 0 0 20px;border-left:2px solid var(--line);color:var(--mut);display:grid;gap:6px}
-.bar{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;grid-template-columns:1.3fr .9fr 1.4fr 1fr 1fr 1.1fr;gap:12px}
-label{font-size:.85rem;color:var(--mut);font-weight:600}
-input,select{display:block;width:100%;margin-top:5px;background:#10121a;border:1px solid #444a60;border-radius:9px;padding:10px;color:var(--txt);font:inherit}
-.note{color:var(--mut);font-size:.88rem;margin:12px 2px 0}
-.month{display:flex;align-items:baseline;gap:12px;font:800 1.7rem/1 var(--disp);letter-spacing:.03em;margin:30px 0 12px}.month span{font:600 .9rem var(--body);color:var(--mut);letter-spacing:0}
-.stub{position:relative;display:grid;grid-template-columns:var(--sw) 1fr 260px;background:var(--bone);color:var(--ink);border-radius:14px;margin:0 0 12px}
-.stub::before,.stub::after{content:"";position:absolute;left:calc(var(--sw) - 9px);width:18px;height:18px;border-radius:50%;background:var(--page)}
-.stub::before{top:-9px}.stub::after{bottom:-9px}
-.when{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px 6px;border-right:2px dashed #b4b0a2;text-align:center;font-weight:700}
-.day{font:800 2.8rem/1 var(--disp)}.dow,.mon{font-size:.85rem;color:var(--soft)}
-.info{padding:16px 18px;display:grid;gap:8px;align-content:start}h3{margin:0;font-size:1.25rem;line-height:1.25;overflow-wrap:anywhere}
-.place{color:var(--soft)}.tags{display:flex;gap:6px;flex-wrap:wrap}.tag{background:#d9d5c8;border-radius:6px;padding:1px 8px;font-size:.8rem;font-weight:700}.tag.new{background:var(--amber)}
-.acts{display:flex;gap:8px;flex-wrap:wrap}.host{font-size:.85rem;color:var(--soft)}
-.trip{padding:16px 18px;background:var(--bone2);border-radius:0 14px 14px 0;display:grid;gap:8px;align-content:start}
-.fare{font:800 2rem/1 var(--disp);letter-spacing:.02em}.sub{font-size:.85rem;color:var(--soft)}
-.budgetbar{margin-top:12px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:15px 16px}
-.budgetbar h2{font-size:1.05rem;margin:0 0 4px}.budgetfields{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:12px}
-.budgetfields input{max-width:100%}.budgethint{font-size:.82rem;color:var(--mut);margin-top:9px}
-.budgettotal{font:800 1.6rem/1.15 var(--disp);color:var(--ink)}
-.weatherline{font-size:.83rem;color:var(--soft)}.weatherline button{font:inherit;color:var(--ink);background:transparent;border:0;padding:0;text-decoration:underline;cursor:pointer}
-.place a{color:var(--uv);font-weight:700;text-decoration:underline;text-underline-offset:2px}
-.empty{padding:28px;border:1px dashed #555a70;border-radius:14px;color:var(--mut)}
-footer{margin-top:40px;color:var(--mut);font-size:.85rem;max-width:80ch}
-@media(max-width:860px){.bar{grid-template-columns:1fr 1fr}.hero{grid-template-columns:1fr}.facts{padding:12px 0 0;border-left:0;border-top:2px solid var(--line)}}
-@media(max-width:700px){.budgetfields{grid-template-columns:1fr 1fr}:root{--sw:74px}.stub{grid-template-columns:var(--sw) 1fr}.trip{grid-column:1/-1;border-radius:0 0 14px 14px;border-top:2px dashed #b4b0a2}.bar{grid-template-columns:1fr}}
+:root {
+  --bg-deep: #05070b;
+  --bg-card: rgba(10, 15, 26, 0.75);
+  --bg-card-hover: rgba(16, 24, 40, 0.9);
+  --bg-panel: rgba(12, 18, 32, 0.85);
+  --neon-cyan: #00f2fe;
+  --neon-teal: #4facfe;
+  --neon-violet: #a855f7;
+  --neon-magenta: #ec4899;
+  --border-cyan: rgba(0, 242, 254, 0.28);
+  --border-violet: rgba(168, 85, 247, 0.28);
+  --border-dim: rgba(255, 255, 255, 0.08);
+  --text-pure: #ffffff;
+  --text-silver: #c5cedd;
+  --text-dim: #64748b;
+  --font-hud: 'Orbitron', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-main: 'Space Grotesk', system-ui, sans-serif;
+  --sw: 104px;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background-color: var(--bg-deep);
+  color: var(--text-silver);
+  font-family: var(--font-main);
+  line-height: 1.5;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+  background-image: 
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0, 242, 254, 0.15), transparent),
+    radial-gradient(circle 600px at 85% 30%, rgba(168, 85, 247, 0.12), transparent),
+    radial-gradient(circle 500px at 15% 75%, rgba(0, 242, 254, 0.08), transparent);
+  background-attachment: fixed;
+}
+
+/* Subtle Sci-Fi Grid Overlay */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-size: 40px 40px;
+  background-image: 
+    linear-gradient(to right, rgba(0, 242, 254, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 242, 254, 0.03) 1px, transparent 1px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.wrap {
+  max-width: 1140px;
+  margin: auto;
+  padding: 32px 24px 80px;
+  position: relative;
+  z-index: 1;
+}
+
+a { color: inherit; text-decoration: none; }
+
+/* HUD Top Header */
+.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border-dim);
+}
+
+.brand-wrap {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.brand-badge {
+  background: rgba(0, 242, 254, 0.1);
+  border: 1px solid var(--neon-cyan);
+  padding: 6px 12px;
+  font-family: var(--font-hud);
+  font-weight: 800;
+  font-size: 0.85rem;
+  letter-spacing: 0.15em;
+  color: var(--neon-cyan);
+  border-radius: 4px;
+  text-shadow: 0 0 10px rgba(0, 242, 254, 0.6);
+  box-shadow: 0 0 15px rgba(0, 242, 254, 0.2);
+}
+
+.brand-title {
+  font-family: var(--font-hud);
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: 0.1em;
+  color: var(--text-pure);
+}
+
+.brand-sub {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  display: block;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sys-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 242, 254, 0.05);
+  border: 1px solid var(--border-cyan);
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--neon-cyan);
+}
+
+.sys-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--neon-cyan);
+  box-shadow: 0 0 8px var(--neon-cyan);
+  animation: pulse 2s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+/* Sci-Fi Action Button */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 6px;
+  border: 1px solid var(--border-cyan);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-pure);
+  background: rgba(10, 18, 30, 0.6);
+  backdrop-filter: blur(8px);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn:hover {
+  background: rgba(0, 242, 254, 0.15);
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 16px rgba(0, 242, 254, 0.3);
+  transform: translateY(-2px);
+  color: var(--neon-cyan);
+}
+
+.btn.p {
+  background: linear-gradient(135deg, rgba(0, 242, 254, 0.25), rgba(168, 85, 247, 0.25));
+  border-color: var(--neon-cyan);
+  color: var(--text-pure);
+}
+
+.btn.p:hover {
+  background: linear-gradient(135deg, rgba(0, 242, 254, 0.4), rgba(168, 85, 247, 0.4));
+  box-shadow: 0 0 20px rgba(0, 242, 254, 0.45);
+}
+
+.btn.ghost {
+  border-color: var(--border-dim);
+  color: var(--text-silver);
+}
+
+.btn.ghost:hover {
+  border-color: var(--neon-cyan);
+  color: var(--neon-cyan);
+}
+
+/* Futuristic Hero Section */
+.hero {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 32px;
+  align-items: center;
+  padding: 48px 0 36px;
+}
+
+.hero-tag {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--neon-cyan);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hero-headline {
+  font-family: var(--font-hud);
+  font-size: clamp(2.6rem, 5vw, 4.4rem);
+  font-weight: 900;
+  line-height: 1.05;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: linear-gradient(135deg, #ffffff 40%, var(--neon-cyan) 80%, var(--neon-violet) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 24px;
+}
+
+.countdown-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border-cyan);
+  border-radius: 12px;
+  padding: 24px;
+  position: relative;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 0 20px rgba(0, 242, 254, 0.05);
+}
+
+.countdown-box::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  right: 20px;
+  width: 40px;
+  height: 2px;
+  background: var(--neon-cyan);
+  box-shadow: 0 0 8px var(--neon-cyan);
+}
+
+.kick {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--neon-cyan);
+  margin-bottom: 4px;
+}
+
+.count {
+  font-family: var(--font-hud);
+  font-size: clamp(3rem, 6vw, 4.8rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--text-pure);
+  text-shadow: 0 0 25px rgba(0, 242, 254, 0.4);
+  margin: 6px 0 12px;
+}
+
+.where {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-silver);
+  border-left: 2px solid var(--neon-cyan);
+  padding-left: 12px;
+}
+
+.facts-panel {
+  background: rgba(10, 16, 28, 0.6);
+  border: 1px solid var(--border-dim);
+  border-radius: 12px;
+  padding: 24px;
+  backdrop-filter: blur(12px);
+}
+
+.facts-header {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--neon-violet);
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.facts {
+  list-style: none;
+  display: grid;
+  gap: 12px;
+}
+
+.facts li {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--text-silver);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.facts li::before {
+  content: "◆";
+  font-size: 0.6rem;
+  color: var(--neon-magenta);
+}
+
+/* Control Cockpit / Filters Bar */
+.bar {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-cyan);
+  border-radius: 10px;
+  padding: 20px;
+  display: grid;
+  grid-template-columns: 1.3fr 0.9fr 1.4fr 1fr 1fr 1.1fr;
+  gap: 14px;
+  backdrop-filter: blur(20px);
+  margin: 32px 0 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(0, 242, 254, 0.05);
+}
+
+label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--neon-cyan);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+input, select {
+  background: rgba(5, 10, 18, 0.8);
+  border: 1px solid rgba(0, 242, 254, 0.25);
+  border-radius: 6px;
+  padding: 10px 12px;
+  color: var(--text-pure);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  transition: all 0.2s;
+  outline: none;
+}
+
+input:focus, select:focus {
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 12px rgba(0, 242, 254, 0.4);
+}
+
+/* Trip Budget Calculator Panel */
+.budgetbar {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-violet);
+  border-radius: 10px;
+  padding: 20px;
+  margin: 0 0 20px;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), inset 0 0 15px rgba(168, 85, 247, 0.05);
+}
+
+.budgetbar h2 {
+  font-family: var(--font-hud);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--neon-violet);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.budgetbar .note {
+  margin: 0 0 14px;
+}
+
+.budgetfields {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.budgethint {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  color: var(--text-dim);
+  margin-top: 12px;
+}
+
+.note {
+  font-family: var(--font-mono);
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  margin: 8px 4px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.note-badge {
+  background: rgba(0, 242, 254, 0.08);
+  border: 1px solid var(--border-cyan);
+  padding: 4px 10px;
+  border-radius: 4px;
+  color: var(--neon-cyan);
+}
+
+/* Month HUD Divider */
+.month {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-family: var(--font-hud);
+  font-weight: 800;
+  font-size: 1.45rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-pure);
+  margin: 40px 0 18px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-cyan);
+}
+
+.month span {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 0.78rem;
+  color: var(--neon-cyan);
+  background: rgba(0, 242, 254, 0.1);
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: 0;
+  margin-left: auto;
+}
+
+/* Futuristic Ticket Card */
+.stub {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--sw) 1fr 290px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-dim);
+  border-radius: 10px;
+  margin: 0 0 16px;
+  backdrop-filter: blur(14px);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.stub:hover {
+  transform: translateY(-3px);
+  border-color: var(--border-cyan);
+  background: var(--bg-card-hover);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0, 242, 254, 0.15);
+}
+
+.when {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 8px;
+  border-right: 1px dashed rgba(0, 242, 254, 0.25);
+  text-align: center;
+  background: rgba(0, 242, 254, 0.02);
+}
+
+.dow {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--neon-cyan);
+}
+
+.day {
+  font-family: var(--font-hud);
+  font-size: 2.6rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--text-pure);
+  text-shadow: 0 0 15px rgba(0, 242, 254, 0.4);
+  margin: 4px 0;
+}
+
+.mon {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+}
+
+.info {
+  padding: 20px 24px;
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.info h3 {
+  font-family: var(--font-hud);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-pure);
+  letter-spacing: 0.02em;
+}
+
+.place {
+  font-size: 0.95rem;
+  color: var(--text-silver);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.place::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--neon-violet);
+}
+
+.place a {
+  color: var(--neon-cyan);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  transition: color 0.2s;
+}
+
+.place a:hover {
+  color: #fff;
+  text-shadow: 0 0 8px var(--neon-cyan);
+}
+
+.weatherline {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: #38bdf8;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.weatherline button {
+  font: inherit;
+  color: var(--neon-cyan);
+  background: rgba(0, 242, 254, 0.1);
+  border: 1px solid var(--border-cyan);
+  border-radius: 4px;
+  padding: 2px 8px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.weatherline button:hover {
+  background: rgba(0, 242, 254, 0.25);
+  box-shadow: 0 0 10px rgba(0, 242, 254, 0.4);
+  color: #fff;
+}
+
+.tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tag {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-dim);
+  border-radius: 4px;
+  padding: 3px 10px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-silver);
+}
+
+.tag.new {
+  background: rgba(0, 242, 254, 0.15);
+  border-color: var(--neon-cyan);
+  color: var(--neon-cyan);
+  font-weight: 700;
+  text-shadow: 0 0 8px rgba(0, 242, 254, 0.4);
+}
+
+.acts {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.host {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  color: var(--text-dim);
+}
+
+/* Cyber Trip & Fare Calculation Panel */
+.trip {
+  padding: 20px 24px;
+  background: rgba(5, 10, 18, 0.45);
+  border-left: 1px solid var(--border-dim);
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.fare {
+  font-family: var(--font-hud);
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: var(--text-pure);
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 15px rgba(0, 242, 254, 0.3);
+}
+
+.budgettotal {
+  font-family: var(--font-hud);
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--neon-violet);
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+}
+
+.sub {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  color: var(--text-dim);
+  line-height: 1.4;
+}
+
+.empty {
+  padding: 40px;
+  border: 1px dashed var(--border-cyan);
+  border-radius: 10px;
+  text-align: center;
+  font-family: var(--font-mono);
+  color: var(--text-dim);
+}
+
+footer {
+  margin-top: 60px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-dim);
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  font-family: var(--font-mono);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+/* Responsive Media Queries */
+@media (max-width: 992px) {
+  .hero { grid-template-columns: 1fr; }
+  .bar { grid-template-columns: 1fr 1fr; }
+  .budgetfields { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 768px) {
+  :root { --sw: 80px; }
+  .stub { grid-template-columns: var(--sw) 1fr; }
+  .trip { 
+    grid-column: 1 / -1; 
+    border-left: none; 
+    border-top: 1px dashed rgba(0, 242, 254, 0.25); 
+  }
+  .bar { grid-template-columns: 1fr; }
+  .budgetfields { grid-template-columns: 1fr; }
+  .header-actions { display: none; }
+}
 </style>
 </head>
-<body><div class="wrap">
-<header class="top"><span class="brand">Boris Brejcha tour tracker (unofficial)</span><a class="btn ghost" href="https://www.borisbrejcha.de/dates" target="_blank" rel="noopener noreferrer">Official tour dates<span class="sr" hidden> (opens in new tab)</span></a></header>
-<section class="hero" aria-live="polite"><div><p class="kick">Next show</p><p class="count" id="count">…</p><p class="where" id="where">Loading tour dates</p></div><ul class="facts" id="facts"></ul></section>
-<section class="bar" aria-label="Filters and travel">
-<label>Fly from<select id="from"></select></label>
-<label>Trip<select id="trip"><option value="round">Round trip</option><option value="one">One way</option></select></label>
-<label>Search<input id="q" type="search" placeholder="Venue, city or country"></label>
-<label>Country<select id="country"><option value="">All countries</option></select></label>
-<label>Show<select id="show"><option value="up">Upcoming</option><option value="new">New this week</option><option value="all">All listed</option></select></label>
-<label>Sort by<select id="sort"><option value="date">Date</option><option value="new">Newly announced</option><option value="near">Nearest to me</option><option value="cheap">Cheapest to reach</option><option value="country">Country</option></select></label>
-</section>
-<section class="budgetbar" aria-label="Trip budget calculator">
-<h2>Trip budget calculator</h2>
-<p class="note" style="margin:0">Enter your own ticket, hotel and local expenses. Each concert shows an estimated total including the existing rough flight range.</p>
-<div class="budgetfields">
-<label>Ticket (€)<input id="budgetTicket" type="number" min="0" step="1" value="0" inputmode="decimal"></label>
-<label>Hotel per night (€)<input id="budgetHotel" type="number" min="0" step="1" value="0" inputmode="decimal"></label>
-<label>Nights<select id="budgetNights"><option value="0">0 nights</option><option value="1">1 night</option><option value="2" selected>2 nights</option><option value="3">3 nights</option><option value="4">4 nights</option><option value="5">5 nights</option></select></label>
-<label>Other costs (€)<input id="budgetOther" type="number" min="0" step="1" value="0" inputmode="decimal"></label>
+<body>
+<div class="wrap">
+  <!-- HUD Top Header -->
+  <header class="top">
+    <div class="brand-wrap">
+      <div class="brand-badge">BB</div>
+      <div>
+        <div class="brand-title">BORIS BREJCHA</div>
+        <span class="brand-sub">CYBER ODYSSEY // GLOBAL HUD</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="sys-status">
+        <span class="sys-dot"></span>
+        <span>UNOFFICIAL TOUR TRACKER</span>
+      </div>
+      <a class="btn ghost" href="https://www.borisbrejcha.de/dates" target="_blank" rel="noopener noreferrer">Official Tour Dates ↗</a>
+    </div>
+  </header>
+
+  <!-- Futuristic Hero Section -->
+  <section class="hero" aria-live="polite">
+    <div>
+      <p class="hero-tag">SYS//NAV ❯ WARP COORDINATES // TIME MATRIX</p>
+      <h1 class="hero-headline">Sound in Motion</h1>
+      <div class="countdown-box">
+        <p class="kick">▶ Next Upcoming Performance</p>
+        <p class="count" id="count">Loading…</p>
+        <p class="where" id="where">Loading verified concert data…</p>
+      </div>
+    </div>
+    <div class="facts-panel">
+      <div class="facts-header">
+        <span>HUD // TELEMETRY</span>
+      </div>
+      <ul class="facts" id="facts">
+        <li>Loading concert data…</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Cockpit Control Console (Filters) -->
+  <section class="bar" aria-label="Filters and travel">
+    <label>// DEPARTURE HUB
+      <select id="from"></select>
+    </label>
+    <label>// ITINERARY
+      <select id="trip">
+        <option value="round">Round trip</option>
+        <option value="one">One way</option>
+      </select>
+    </label>
+    <label>// EXPLORE VENUE / CITY
+      <input id="q" type="search" placeholder="Type city, club or festival..">
+    </label>
+    <label>// TERRITORY
+      <select id="country">
+        <option value="">All countries</option>
+      </select>
+    </label>
+    <label>// TIMELINE
+      <select id="show">
+        <option value="up">Upcoming shows</option>
+        <option value="new">New this week</option>
+        <option value="all">All listed</option>
+      </select>
+    </label>
+    <label>// SEQUENCE
+      <select id="sort">
+        <option value="date">Earliest date</option>
+        <option value="new">Newly announced</option>
+        <option value="near">Nearest hub</option>
+        <option value="cheap">Lowest fare</option>
+        <option value="country">Country</option>
+      </select>
+    </label>
+  </section>
+
+  <!-- Trip Budget Calculator Panel -->
+  <section class="budgetbar" aria-label="Trip budget calculator">
+    <h2>// TRIP BUDGET CALCULATOR & EXPENSE MATRIX</h2>
+    <p class="note" style="margin:0 0 12px">// SIMULATE CUSTOM TICKET, LODGING & ANCILLARY EXPENSES ACROSS ALL DESTINATIONS</p>
+    <div class="budgetfields">
+      <label>// TICKET ESTIMATE (€)
+        <input id="budgetTicket" type="number" min="0" step="1" value="0" inputmode="decimal">
+      </label>
+      <label>// HOTEL PER NIGHT (€)
+        <input id="budgetHotel" type="number" min="0" step="1" value="0" inputmode="decimal">
+      </label>
+      <label>// NIGHTS DURATION
+        <select id="budgetNights">
+          <option value="0">0 nights</option>
+          <option value="1">1 night</option>
+          <option value="2" selected>2 nights</option>
+          <option value="3">3 nights</option>
+          <option value="4">4 nights</option>
+          <option value="5">5 nights</option>
+        </select>
+      </label>
+      <label>// ANCILLARY COSTS (€)
+        <input id="budgetOther" type="number" min="0" step="1" value="0" inputmode="decimal">
+      </label>
+    </div>
+    <p class="budgethint">// PER-PERSON METRICS IN EUR. SCENARIO CALCULATION ONLY; COMBINES ROUGH DISTANCE-BASED FLIGHT ESTIMATES AND YOUR OWN EXPENSES; NO LIVE PRICES.</p>
+  </section>
+
+  <div class="note">
+    <span>// FLIGHT ESTIMATES ARE DISTANCE-BASED, NOT LIVE FARES. USE LIVE FARES TO CHECK ACTUAL PRICES.</span>
+    <span class="note-badge" id="shown" aria-live="polite">Loading…</span>
+  </div>
+
+  <!-- Concert Listing Matrix -->
+  <div id="list">
+    <p class="empty">INITIALIZING SATELLITE TELEMETRY…</p>
+  </div>
+
+  <!-- HUD Footer -->
+  <footer>
+    <div>Unofficial fan initiative & architectural exploration, not affiliated with Boris Brejcha or Fckng Serious. Dates, times, ticket links and availability can change. Verify with official event sources before booking travel. Weather uses nearby airport coordinates; flight costs are not live fares.</div>
+    <div style="color: var(--neon-cyan)">UNOFFICIAL CONCERT DISCOVERY // TRAVEL PLANNING</div>
+  </footer>
 </div>
-<p class="budgethint">Amounts are per person in EUR. Enter 0 for unknown costs; the result is a planning scenario, not a price quote. Flight estimates are not live fares.</p>
-</section>
-<p class="note">Travel prices are rough estimates from distance, for the day before to the day after each show. Use “Live fares” for real prices. <span id="shown" aria-live="polite"></span></p>
-<div id="list"><p class="empty">Loading concert data…</p></div>
-<footer>Unofficial fan project, not affiliated with Boris Brejcha. Dates, times and ticket links may change, so confirm details with the organizer before you travel. Times are as listed by the source. “New” means this tracker found the show in the last seven days.</footer>
-</div>
+
 <script>
 (()=>{'use strict';
 const $=id=>document.getElementById(id);
@@ -79,14 +839,14 @@ const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLo
 const AL={usa:'united states',us:'united states',uk:'united kingdom',uae:'united arab emirates','czech republic':'czechia'};
 const cn=s=>{s=norm(s).trim();return AL[s]||s};
 const A={},byC={},keys=[];
-`WAW|Warsaw Chopin|warsaw,warszawa|Poland|52.17|20.97
+`WAW|Warsaw Chopin (WAW)|warsaw,warszawa|Poland|52.17|20.97
 WMI|Warsaw Modlin|-|Poland|52.45|20.65
 KRK|Kraków|krakow,cracow|Poland|50.08|19.78
 GDN|Gdańsk|gdansk|Poland|54.38|18.47
 WRO|Wrocław|wroclaw|Poland|51.10|16.89
-BER|Berlin|berlin|Germany|52.36|13.50
+BER|Berlin Brandenburg|berlin|Germany|52.36|13.50
 DRS|Dresden|dresden|Germany|51.13|13.77
-FRA|Frankfurt|frankfurt|Germany|50.03|8.57
+FRA|Frankfurt Airport|frankfurt|Germany|50.03|8.57
 MUC|Munich|munich,munchen|Germany|48.35|11.79
 HAM|Hamburg|hamburg|Germany|53.63|9.99
 DUS|Düsseldorf|dusseldorf|Germany|51.29|6.77
@@ -97,18 +857,18 @@ BUD|Budapest|budapest|Hungary|47.44|19.26
 ZRH|Zurich|zurich,bern,berne|Switzerland|47.46|8.55
 GVA|Geneva|geneva|Switzerland|46.24|6.11
 BSL|Basel|basel|Switzerland|47.59|7.53
-AMS|Amsterdam|amsterdam|Netherlands|52.31|4.76
+AMS|Amsterdam Schiphol|amsterdam|Netherlands|52.31|4.76
 BRU|Brussels|brussels|Belgium|50.90|4.48
-CDG|Paris|paris|France|49.01|2.55
+CDG|Paris Charles de Gaulle|paris|France|49.01|2.55
 LHR|London Heathrow|london|United Kingdom|51.47|-0.45
 MAN|Manchester|manchester|United Kingdom|53.35|-2.27
 DUB|Dublin|dublin|Ireland|53.42|-6.27
-MAD|Madrid|madrid|Spain|40.47|-3.56
-BCN|Barcelona|barcelona|Spain|41.30|2.08
-IBZ|Ibiza|ibiza|Spain|38.87|1.37
+MAD|Madrid-Barajas|madrid|Spain|40.47|-3.56
+BCN|Barcelona El Prat|barcelona|Spain|41.30|2.08
+IBZ|Ibiza Airport|ibiza|Spain|38.87|1.37
 LIS|Lisbon|lisbon,lisboa|Portugal|38.77|-9.13
-FCO|Rome|rome,roma|Italy|41.80|12.24
-MXP|Milan|milan,milano|Italy|45.63|8.72
+FCO|Rome Fiumicino|rome,roma|Italy|41.80|12.24
+MXP|Milan Malpensa|milan,milano|Italy|45.63|8.72
 ATH|Athens|athens|Greece|37.94|23.94
 IST|Istanbul|istanbul|Turkey|41.26|28.74
 CPH|Copenhagen|copenhagen|Denmark|55.62|12.66
@@ -118,11 +878,11 @@ HEL|Helsinki|helsinki|Finland|60.32|24.96
 OTP|Bucharest|bucharest|Romania|44.57|26.10
 BEG|Belgrade|belgrade|Serbia|44.82|20.31
 JFK|New York JFK|new york|United States|40.64|-73.78
-LAX|Los Angeles|los angeles|United States|33.94|-118.41
+LAX|Los Angeles LAX|los angeles|United States|33.94|-118.41
 MIA|Miami|miami|United States|25.80|-80.29
-ORD|Chicago|chicago|United States|41.98|-87.90
+ORD|Chicago O'Hare|chicago|United States|41.98|-87.90
 YUL|Montréal|montreal|Canada|45.47|-73.74
-YYZ|Toronto|toronto|Canada|43.68|-79.63
+YYZ|Toronto Pearson|toronto|Canada|43.68|-79.63
 YVR|Vancouver|vancouver|Canada|49.19|-123.18
 MEX|Mexico City|mexico city,ciudad de mexico|Mexico|19.44|-99.07
 GUA|Guatemala City|guatemala|Guatemala|14.58|-90.53
@@ -130,13 +890,13 @@ BOG|Bogotá|bogota|Colombia|4.70|-74.15
 LIM|Lima|lima|Peru|-12.02|-77.11
 SCL|Santiago|santiago|Chile|-33.39|-70.79
 EZE|Buenos Aires|buenos aires|Argentina|-34.82|-58.54
-GRU|São Paulo|sao paulo,valinhos,campinas|Brazil|-23.44|-46.47
-DXB|Dubai|dubai|United Arab Emirates|25.25|55.37
+GRU|São Paulo Guarulhos|sao paulo,valinhos,campinas|Brazil|-23.44|-46.47
+DXB|Dubai International|dubai|United Arab Emirates|25.25|55.37
 TLV|Tel Aviv|tel aviv|Israel|32.01|34.89
 HND|Tokyo Haneda|tokyo|Japan|35.55|139.78
-SIN|Singapore|singapore|Singapore|1.36|103.99
-BKK|Bangkok|bangkok|Thailand|13.69|100.75
-SYD|Sydney|sydney|Australia|-33.95|151.18
+SIN|Singapore Changi|singapore|Singapore|1.36|103.99
+BKK|Bangkok Suvarnabhumi|bangkok|Thailand|13.69|100.75
+SYD|Sydney Kingsford|sydney|Australia|-33.95|151.18
 MEL|Melbourne|melbourne|Australia|-37.67|144.84
 BNE|Brisbane|brisbane|Australia|-27.38|153.12
 PER|Perth|perth|Australia|-31.94|115.97
@@ -163,12 +923,13 @@ const budget=()=>{const val=id=>Math.max(0,Number($(id).value)||0);return val('b
 const maps=e=>'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent([e.location,e.country].filter(Boolean).join(', '));
 const weatherCache=new Map();
 const weatherDesc=c=>({0:'Clear sky',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',45:'Fog',48:'Rime fog',51:'Light drizzle',53:'Drizzle',55:'Heavy drizzle',61:'Light rain',63:'Rain',65:'Heavy rain',71:'Light snow',73:'Snow',75:'Heavy snow',80:'Rain showers',81:'Rain showers',82:'Heavy showers',95:'Thunderstorms'})[c]||'Variable conditions';
+
 async function loadWeather(e,target){
  const d=e._d,k=e._k;
  if(!d||!k){target.textContent='Forecast unavailable: destination not mapped.';return}
  const days=Math.round((utc(k)-utc(today))/864e5);
  if(days<0||days>15){target.textContent='Forecast available only within about 16 days of the concert.';return}
- target.textContent='Loading forecast…';
+ target.textContent='Scanning atmospheric telemetry…';
  try{
   const key=d.c+':'+k;
   if(!weatherCache.has(key)){
@@ -180,29 +941,51 @@ async function loadWeather(e,target){
   const data=weatherCache.get(key),idx=data.daily?.time?.indexOf(k)??-1;
   if(idx<0){target.textContent='Forecast not available for this date yet.';return}
   const v=data.daily,low=v.temperature_2m_min[idx],high=v.temperature_2m_max[idx],rain=v.precipitation_probability_max[idx];
-  target.textContent=`${weatherDesc(v.weather_code[idx])} · ${Math.round(low)}–${Math.round(high)}°C · Rain chance ${rain}% (near ${d.n} airport)`;
- }catch(err){console.warn('Weather request failed',err);target.textContent='Weather unavailable right now; try again later.'}
+  target.textContent=`☁ ${weatherDesc(v.weather_code[idx])} · ${Math.round(low)}–${Math.round(high)}°C · Precip ${rain}% (near ${d.n})`;
+ }catch(err){console.warn('Weather request failed',err);target.textContent='Atmospheric sensor offline; retry later.';}
 }
 
 function vp(e){const v=(e.title||'').replace(/^boris brejcha\s*@\s*/i,'').trim()||'Boris Brejcha';let p=(e.location||'').trim();if(p.toLowerCase().startsWith(v.toLowerCase()))p=p.slice(v.length).replace(/^[\s,;-]+/,'');return[v,p||e.country||'Location not listed']}
+
 function row(e,o,rt){
  const[venue,place]=vp(e),tk=url(e.ticket_url),via=url(e.ticket_tracking_url),det=url(e.url),tm=(String(e.date).match(/T(\d\d:\d\d)/)||[])[1],k=e._k;
  const when=h('div','when',h('span','dow',k&&fmt(k,{weekday:'short'})),h('b','day',k?String(+k.slice(8)):'?'),h('span','mon',k&&fmt(k,{month:'short'})));
- const tags=h('p','tags',isNew(e)&&h('span','tag new','New this week'),!up(e)&&h('span','tag','Past'),tm&&tm!=='00:00'&&h('span','tag','Listed at '+tm),e.organizer&&!/^boris brejcha$/i.test(e.organizer)&&h('span','tag','By '+e.organizer));
- const buy=tk||via,host=tk?'Tickets from '+(e.ticket_provider||new URL(tk).hostname):via?'Ticket link opens through Bandsintown':'Ticket link not available yet';
- const info=h('div','info',h('h3',0,venue),h('p','place',place,' · ',a(maps(e),'','View on Google Maps ↗')),tags,h('div','acts',buy&&a(buy,'btn p','Buy tickets'),det&&a(det,'btn','Event page')),h('p','host',host));
+ const tags=h('p','tags',isNew(e)&&h('span','tag new','✦ NEW ANNOUNCEMENT'),!up(e)&&h('span','tag','Past Mission'),tm&&tm!=='00:00'&&h('span','tag','Set '+tm),e.organizer&&!/^boris brejcha$/i.test(e.organizer)&&h('span','tag','Host: '+e.organizer));
+ const buy=tk||via,host=tk?'Ticket destination: '+(e.ticket_provider||new URL(tk).hostname):via?'Ticket tracking link via Bandsintown':'Direct ticket link not available';
+ const info=h('div','info',h('h3',0,venue),h('p','place',place,' · ',a(maps(e),'','View on Google Maps ↗')),tags,h('div','acts',buy&&a(buy,'btn p',tk?'Buy Tickets ↗':'Ticket Link ↗'),det&&a(det,'btn ghost','Mission Details')),h('p','host',host));
+ 
  const weather=h('p','weatherline');
- if(up(e)&&e._d){const days=Math.round((utc(k)-utc(today))/864e5);if(days<=15){const b=h('button',0,'Check local forecast');b.type='button';b.addEventListener('click',()=>loadWeather(e,weather));weather.append('☁ ',b)}else weather.textContent='☁ Local weather forecast available about 16 days before the show.'}
- else if(up(e))weather.textContent='☁ Weather unavailable: destination not mapped.';
+ if(up(e)&&e._d){
+   const days=Math.round((utc(k)-utc(today))/864e5);
+   if(days<=15){
+     const b=h('button',0,'Check local forecast');
+     b.type='button';
+     b.addEventListener('click',()=>loadWeather(e,weather));
+     weather.append('☁ ',b);
+   } else {
+     weather.textContent='☁ Local weather telemetry available within 16 days of event.';
+   }
+ } else if(up(e)) {
+   weather.textContent='☁ Weather telemetry unavailable: destination coordinates unmapped.';
+ }
  info.append(weather);
+
  const d=e._d;let trip;const extra=budget();
- if(!up(e))trip=h('div','trip',h('p','sub','This show has already happened.'));
- else if(!o||!d)trip=h('div','trip',h('p','budgettotal',money(extra)+' + travel'),h('p','sub',o?'No airport mapped for this city yet.':'Choose a departure airport.'),h('p','sub','Trip budget excludes transport until a destination is mapped.'));
- else{const km=Math.round(hav(o,d)),near=km<250,[lo,hi]=fare(km,rt);
+ if(!up(e))trip=h('div','trip',h('p','sub','This show has already concluded.'));
+ else if(!o||!d)trip=h('div','trip',h('p','budgettotal',money(extra)+' + transit'),h('p','sub',o?'Uncharted airspace. Coordinates not yet mapped.':'Select origin departure hub.'),h('p','sub','Trip budget excludes transport until an airport is mapped.'));
+ else{
+  const km=Math.round(hav(o,d)),near=km<250,[lo,hi]=fare(km,rt);
   const fl='https://www.google.com/travel/flights?q='+encodeURIComponent(`Flights from ${o.c} to ${d.c} on ${shift(k,-1)}`+(rt?` through ${shift(k,1)}`:' one way'));
-  trip=h('div','trip',h('p','fare',near?'Close by':`€${lo}–${hi}`),h('p','budgettotal',near?money(extra)+' + ground travel':`${money(extra+lo)}–${money(extra+hi)} total`),h('p','sub',near?`${km} km from ${o.n}. Train or car is easier.`:`Estimated ${rt?'round trip':'one way'}, ${o.c} to ${d.c}, ${km.toLocaleString('en-GB')} km`),
-   h('div','acts',!near&&a(fl,'btn','Live fares'),eu(o)&&eu(d)&&km<1500&&a('https://int.bahn.de/en','btn','Trains')))}
- return h('article','stub',when,info,trip)}
+  trip=h('div','trip',
+   h('p','fare',near?'Nearby / Ground travel':`€${lo}–${hi}`),
+   h('p','budgettotal',near?money(extra)+' + ground transit':`${money(extra+lo)}–${money(extra+hi)} Total Est.`),
+   h('p','sub',near?`${km} km from ${o.n}. High-speed rail optimal.`:`Estimated ${rt?'round-trip':'one-way'} flight (${km.toLocaleString('en-GB')} km from ${o.c})`),
+   h('div','acts',!near&&a(fl,'btn p','Live Fares ↗'),eu(o)&&eu(d)&&km<1500&&a('https://int.bahn.de/en','btn ghost','Compare Trains ↗'))
+  );
+ }
+ return h('article','stub',when,info,trip);
+}
+
 let ev=[];
 function render(){
  const o=A[$('from').value],rt=$('trip').value==='round',q=norm($('q').value),c=$('country').value,s=$('show').value,so=$('sort').value;
@@ -210,25 +993,48 @@ function render(){
  L.forEach(e=>{e._km=o&&e._d?Math.round(hav(o,e._d)):null});
  const dd=(x,y)=>x._k.localeCompare(y._k),cost=x=>x._km==null?1e9:fare(x._km,rt)[0];
  L.sort(so==='new'?(x,y)=>String(y.first_seen||'').localeCompare(String(x.first_seen||''))||dd(x,y):so==='near'?(x,y)=>(x._km??1e9)-(y._km??1e9)||dd(x,y):so==='cheap'?(x,y)=>cost(x)-cost(y)||dd(x,y):so==='country'?(x,y)=>String(x.country).localeCompare(String(y.country))||dd(x,y):dd);
- $('shown').textContent=L.length+(L.length===1?' show listed.':' shows listed.');
+ $('shown').textContent=L.length+(L.length===1?' show listed':' shows listed');
  const box=$('list');box.replaceChildren();
- if(!L.length)box.append(h('p','empty','No shows match. Clear the search, or switch Show to “All listed”.'));
+ if(!L.length)box.append(h('p','empty','NO RADAR SIGNALS MATCH CRITERIA. ADJUST SEARCH FILTERS.'));
  let last='';
- for(const e of L){const m=e._k.slice(0,7);if(so==='date'&&m&&m!==last){last=m;const n=L.filter(x=>x._k.startsWith(m)).length;box.append(h('h2','month',fmt(e._k,{month:'long',year:'numeric'}),h('span',0,n+(n===1?' show':' shows'))))}box.append(row(e,o,rt))}}
+ for(const e of L){const m=e._k.slice(0,7);if(so==='date'&&m&&m!==last){last=m;const n=L.filter(x=>x._k.startsWith(m)).length;box.append(h('h2','month',fmt(e._k,{month:'long',year:'numeric'}),h('span',0,n+(n===1?' event':' events'))))}box.append(row(e,o,rt))}
+}
+
 function hero(data){
  const U=ev.filter(up).sort((x,y)=>x._k.localeCompare(y._k)),n=U[0],f=$('facts');f.replaceChildren();
- if(!n){$('count').textContent='No dates yet';$('where').textContent='No upcoming shows are listed right now.'}
- else{const d=Math.round((utc(n._k)-utc(today))/864e5),[v,p]=vp(n);$('count').textContent=d===0?'Today':d===1?'Tomorrow':d+' days';$('where').textContent=`${v}, ${p}. ${fmt(n._k,{weekday:'long',day:'numeric',month:'long'})}.`}
- const C=new Set(U.map(e=>cn(e.country)).filter(Boolean)),N=ev.filter(isNew).length,last=Date.parse(data.last_seen||'');
- f.append(h('li',0,`${U.length} upcoming ${U.length===1?'show':'shows'} in ${C.size} ${C.size===1?'country':'countries'}`),h('li',0,N?`${N} newly found this week`:'Nothing new this week'),
-  h('li',0,Number.isFinite(last)?'Checked '+new Date(last).toLocaleString('en-GB',{timeZone:'UTC',dateStyle:'medium',timeStyle:'short'})+' UTC':'Last check unknown'))}
+ if(!n){$('count').textContent='NO SIGNALS';$('where').textContent='No upcoming shows currently detected on radar.'}
+ else{const d=Math.round((utc(n._k)-utc(today))/864e5),[v,p]=vp(n);$('count').textContent=d===0?'TODAY':d===1?'TOMORROW':d+' DAYS';$('where').textContent=`${v} — ${p}. Scheduled on ${fmt(n._k,{weekday:'long',day:'numeric',month:'long'})}.`}
+ const C=new Set(U.map(e=>cn(e.country)).filter(Boolean)),N=ev.filter(isNew).length;
+ f.append(h('li',0,`${U.length} confirmed performances across ${C.size} global territories`),h('li',0,N?`${N} newly listed dates discovered this week`:'Radar matrix up to date'),
+  h('li',0,Number.isFinite(Date.parse(data.last_seen||''))?'Monitor last checked '+new Date(data.last_seen).toLocaleString('en-GB',{timeZone:'UTC',dateStyle:'medium',timeStyle:'short'})+' UTC':'Monitor check time unavailable'))}
+
 const save=(k,v)=>{try{localStorage.setItem(k,v)}catch{}},read=k=>{try{return localStorage.getItem(k)||''}catch{return''}};
-for(const o of Object.values(A).sort((x,y)=>x.n.localeCompare(y.n))){const op=h('option',0,`${o.n} (${o.c})`);op.value=o.c;$('from').append(op)}
+for(const o of Object.values(A).sort((x,y)=>x.n.localeCompare(y.n))){const op=h('option',0,`${o.n}`);op.value=o.c;$('from').append(op)}
 const sv=read('bb_origin');$('from').value=A[sv]?sv:'WAW';if(read('bb_trip'))$('trip').value=read('bb_trip');
 for(const id of['from','trip','q','country','show','sort','budgetTicket','budgetHotel','budgetNights','budgetOther'])$(id).addEventListener('input',()=>{if(id==='from')save('bb_origin',$('from').value);if(id==='trip')save('bb_trip',$('trip').value);render()});
-(async()=>{try{const r=await fetch('./events.json',{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);const data=await r.json();if(!Array.isArray(data.events))throw Error('Missing events');
- ev=data.events.filter(e=>e&&typeof e==='object');ev.forEach(e=>{e._k=ymd(e.date);e._d=dest(e)});
- for(const c of[...new Set(ev.map(e=>String(e.country||'').trim()).filter(Boolean))].sort()){const op=h('option',0,c);op.value=c;$('country').append(op)}
- hero(data);render()}catch(err){console.error(err);$('count').textContent='Offline';$('where').textContent='Could not load concert data. Please try again later.';$('list').replaceChildren(h('p','empty','Could not load concert data.'))}})();
+
+(async()=>{
+ try{
+  const r=await fetch('./events.json',{cache:'no-store'});
+  if(!r.ok) throw Error('Concert data HTTP '+r.status);
+  const data=await r.json();
+  if(!Array.isArray(data.events)) throw Error('Missing events array in events.json');
+  ev=data.events.filter(e=>e&&typeof e==='object'&&ymd(e.date));
+  ev.forEach(e=>{e._k=ymd(e.date);e._d=dest(e)});
+  for(const c of[...new Set(ev.map(e=>String(e.country||'').trim()).filter(Boolean))].sort()){
+   const op=h('option',0,c);op.value=c;$('country').append(op);
+  }
+  hero(data);render();
+ }catch(err){
+  console.error('Unable to load published concert data:',err);
+  $('count').textContent='OFFLINE';
+  $('where').textContent='Could not load the published concert list. Please retry after the next dashboard deployment.';
+  $('facts').replaceChildren(h('li',0,'Concert data unavailable — no sample events displayed'));
+  $('shown').textContent='Data unavailable';
+  $('list').replaceChildren(h('p','empty','Could not load events.json. Check the deployed dashboard data and refresh. If opening this HTML as a local file, use GitHub Pages or a local web server.'));
+ }
 })();
-</script></body></html>
+})();
+</script>
+</body>
+</html>
