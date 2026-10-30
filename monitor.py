@@ -15,6 +15,10 @@ from urllib.parse import parse_qs, quote_plus, unquote
 
 import requests
 from bs4 import BeautifulSoup
+try:  # optional: Chrome TLS-fingerprint impersonation (pip install curl_cffi)
+    from curl_cffi import requests as curl_requests
+except Exception:
+    curl_requests = None
 from playwright.sync_api import sync_playwright
 
 
@@ -317,7 +321,8 @@ def _resolve_by_click(context, page, frame_index, element_index):
         # Popup may start at about:blank and navigate asynchronously.
         for popup in opened[:3]:
             try:
-                popup.wait_for_load_state('domcontentloaded', timeout=3500)
+                popup.wait_for_url(lambda u: u.startswith('http') and not _is_bandsintown(u),
+                                   timeout=8000, wait_until='commit')
             except Exception:
                 pass
             result = verified_destination(popup.url)
@@ -376,6 +381,72 @@ def _is_bandsintown(url):
     return host == "bandsintown.com" or host.endswith(".bandsintown.com")
 
 
+_DIAG_DONE = [False]
+
+
+def _launch(playwright):
+    """Headless Chromium by default. HEADED_CHROME=1 -> real Chrome, not headless (run under xvfb)."""
+    if os.getenv("HEADED_CHROME") == "1":
+        for extra in ({"channel": "chrome"}, {}):
+            try:
+                return playwright.chromium.launch(headless=False, args=BROWSER_ARGS, **extra)
+            except Exception as exc:
+                print(f"Headed browser launch failed ({type(exc).__name__}); trying next option")
+    return playwright.chromium.launch(headless=True, args=BROWSER_ARGS)
+
+
+def _hdr_summary(r):
+    h = r.headers
+    keys = [k for k in ("server", "cf-ray", "cf-mitigated", "x-datadome", "x-amzn-waf-action", "content-type") if h.get(k)]
+    out = f"status={r.status_code} " + " ".join(f"{k}={str(h.get(k))[:40]}" for k in keys)
+    if h.get("Location"):
+        out += f" location_host={urlparse(h.get('Location')).hostname}"
+    return out.strip()
+
+
+def resolve_tracking_with_curl(url):
+    """Follow a /t/ link with a Chrome TLS fingerprint (curl_cffi). Only Bandsintown hops are fetched.
+    Returns (final_url_or_empty, note)."""
+    if curl_requests is None:
+        return "", "curl_cffi_not_installed"
+    current, note = url, ""
+    try:
+        for _ in range(8):
+            r = curl_requests.get(current, impersonate="chrome", allow_redirects=False, timeout=6,
+                                  headers={"Accept-Language": "en-US,en;q=0.9"})
+            note = _hdr_summary(r)
+            location = r.headers.get("Location", "")
+            if r.status_code in (301, 302, 303, 307, 308) and location:
+                current = urljoin(current, location)
+                if not _is_bandsintown(current):
+                    final = safe_ticket_url(current)
+                    return (final, "curl_cffi") if final else ("", "unsafe_target")
+                continue
+            for m in JS_REDIRECT_RE.finditer((r.text or "")[:200000]):
+                target = urljoin(current, m.group(1).replace("\\/", "/"))
+                if not _is_bandsintown(target):
+                    final = safe_ticket_url(target)
+                    if final:
+                        return final, "curl_cffi_page"
+            break
+    except Exception as exc:
+        return "", f"curl_{type(exc).__name__}"
+    return "", note
+
+
+def _diagnose_once(url, curl_note):
+    """One-time log line showing HOW Bandsintown answers this runner (status, WAF headers)."""
+    if _DIAG_DONE[0]:
+        return
+    _DIAG_DONE[0] = True
+    print(f"Diagnostic curl_cffi(chrome): {curl_note}")
+    try:
+        r = requests.get(url, timeout=6, allow_redirects=False, headers={"User-Agent": BROWSER_UA})
+        print(f"Diagnostic requests: {_hdr_summary(r)}")
+    except requests.RequestException as exc:
+        print(f"Diagnostic requests: {type(exc).__name__}")
+
+
 def resolve_tracking_in_browser(context, tracking_url, timeout_ms=8000):
     """Budgeted wrapper: 8 s per link, stops after 3 failures in a row or when time is up."""
     if tracking_url in _FAILED_LINKS:
@@ -384,6 +455,11 @@ def resolve_tracking_in_browser(context, tracking_url, timeout_ms=8000):
         return "", "skipped_budget", []
     if _BUDGET["deadline"] is not None:
         timeout_ms = int(min(timeout_ms, max(1000, (_BUDGET["deadline"] - time.monotonic()) * 1000)))
+    final, curl_note = resolve_tracking_with_curl(tracking_url)
+    if final:
+        _BUDGET["fails"] = 0
+        return final, curl_note, []
+    _diagnose_once(tracking_url, curl_note)
     result = _resolve_tracking_in_browser(context, tracking_url, timeout_ms)
     _BUDGET["fails"] = 0 if result[0] else _BUDGET["fails"] + 1
     if not result[0]:
@@ -455,7 +531,7 @@ def resolve_tracking_urls(events):
     debug = []
     try:
         with sync_playwright() as playwright:
-            browser = playwright.chromium.launch(headless=True, args=BROWSER_ARGS)
+            browser = _launch(playwright)
             context = browser.new_context(locale="en-US", user_agent=BROWSER_UA)
             try:
                 for event in todo:
@@ -485,7 +561,7 @@ def discover_official_tickets(events):
     resolved = 0
     try:
         with sync_playwright() as playwright:
-            browser = playwright.chromium.launch(headless=True, args=BROWSER_ARGS)
+            browser = _launch(playwright)
             context = browser.new_context(locale='en-US', accept_downloads=False, user_agent=BROWSER_UA)
             page = context.new_page()
             try:
@@ -552,10 +628,13 @@ def discover_event_ticket_urls(events):
     missing = [e for e in events if not e.get('ticket_url') and EVENT_PAGE_RE.match(e.get('url', ''))]
     if not missing:
         return
+    if _BUDGET["fails"] >= MAX_CONSECUTIVE_FAILS:
+        print("Ticket discovery: Bandsintown appears to block this runner; skipping event-page visits")
+        return
     print(f'Ticket discovery: checking {len(missing)} event pages with missing direct links')
     try:
         with sync_playwright() as playwright:
-            browser = playwright.chromium.launch(headless=True, args=BROWSER_ARGS)
+            browser = _launch(playwright)
             context = browser.new_context(locale='en-US', user_agent=BROWSER_UA)
             page = context.new_page()
             for index, event in enumerate(missing, 1):
