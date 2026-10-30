@@ -1,3 +1,4 @@
+
 """Monitor Boris Brejcha tour dates; notify only about newly discovered events."""
 
 import hashlib
@@ -50,6 +51,30 @@ def key_for(event):
     return hashlib.sha256(core.encode("utf-8")).hexdigest()[:20]
 
 
+def entity_name(value):
+    """Use only names explicitly present in the source structured data."""
+    if isinstance(value, list):
+        return entity_name(value[0]) if value else ""
+    if isinstance(value, dict):
+        return normalize(value.get("name"))
+    return normalize(value)
+
+
+def ticket_link(obj):
+    """Only publish an explicit offer URL; never guess a ticket seller."""
+    offers = obj.get("offers") or []
+    if isinstance(offers, dict):
+        offers = [offers]
+    if not isinstance(offers, list):
+        return ""
+    for offer in offers:
+        if isinstance(offer, dict):
+            url = canonical_url(offer.get("url"))
+            if url:
+                return url
+    return ""
+
+
 def extract_jsonld(soup):
     events = []
 
@@ -97,6 +122,8 @@ def extract_jsonld(soup):
                         "title": title,
                         "location": location,
                         "url": canonical_url(obj.get("url")) or URL,
+                        "ticket_url": ticket_link(obj),
+                        "organizer": entity_name(obj.get("organizer")),
                     })
 
             for val in obj.values():
@@ -187,6 +214,8 @@ def extract_dom(soup):
                 "title": title,
                 "location": location,
                 "url": url,
+                "ticket_url": "",
+                "organizer": "",
             })
 
     return events
@@ -292,16 +321,16 @@ def send_discord(event, webhook):
 
 
 def send_telegram(event, bot_token, chat_id):
-    """Send one concert notification through the Telegram Bot API."""
-
+    """Send a concert notification using the Telegram Bot API."""
     message = (
-        "🎧 New Boris Brejcha concert detected!\n"
-        f"📅 Date: {event['date']}\n"
-        f"🎵 Event: {event['title'][:180]}\n"
-        f"📍 Location: {event['location'][:180] or 'See event page'}\n"
+        "🎧 New Boris Brejcha concert detected!\\n"
+        f"📅 Date: {event['date']}\\n"
+        f"🎵 Event: {event['title'][:180]}\\n"
+        f"📍 Location: {event['location'][:180] or 'See event page'}\\n"
         f"🔗 {event['url'] or URL}"
     )
-
+    # Telegram's Bot API returns HTTP 200 with {"ok": false} in some errors.
+    # Avoid including the token-bearing URL in exception messages.
     for attempt in range(3):
         try:
             response = requests.post(
@@ -315,21 +344,13 @@ def send_telegram(event, bot_token, chat_id):
                 timeout=30,
             )
         except requests.RequestException:
-            # Do not expose the token-bearing request URL in logs.
-            raise RuntimeError(
-                "Telegram request failed (network or timeout)."
-            ) from None
+            raise RuntimeError("Telegram request failed (network or timeout).") from None
 
         if response.status_code == 429 and attempt < 2:
             try:
-                delay = float(
-                    response.json()
-                    .get("parameters", {})
-                    .get("retry_after", 2)
-                )
+                delay = float(response.json().get("parameters", {}).get("retry_after", 2))
             except (ValueError, TypeError, AttributeError):
                 delay = 2
-
             time.sleep(max(0, min(delay, 60)))
             continue
 
@@ -340,26 +361,22 @@ def send_telegram(event, bot_token, chat_id):
 
         if not response.ok or not accepted:
             raise RuntimeError(
-                "Telegram rejected notification "
-                f"(HTTP {response.status_code})."
+                f"Telegram rejected notification (HTTP {response.status_code})."
             )
-
         print("Telegram notification delivered successfully.")
         return
 
 
-def save_state(known, events, pending=None):
-    """Save historical IDs and any incomplete notification deliveries."""
-
+def save_state(known, events, pending=None, first_seen=None):
+    """Keep existing state fields and track incomplete multi-channel delivery."""
     STATE.parent.mkdir(parents=True, exist_ok=True)
-
     data = {
         "known_ids": sorted(known),
         "last_seen": datetime.now(timezone.utc).isoformat(),
         "current_events": events,
         "pending_notifications": pending or {},
+        "first_seen": first_seen or {},
     }
-
     STATE.write_text(
         json.dumps(data, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
@@ -372,14 +389,10 @@ def main():
     chat_id = os.getenv("TELEGRAM_CHAT_ID")
 
     if not webhook:
-        raise RuntimeError(
-            "Missing DISCORD_WEBHOOK_URL GitHub Actions secret"
-        )
-
+        raise RuntimeError("Missing DISCORD_WEBHOOK_URL GitHub Actions secret")
     if not bot_token or not chat_id:
         raise RuntimeError(
-            "Missing TELEGRAM_BOT_TOKEN or "
-            "TELEGRAM_CHAT_ID GitHub Actions secret"
+            "Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID GitHub Actions secret"
         )
 
     html = fetch_html()
@@ -388,10 +401,8 @@ def main():
     if not events:
         DEBUG.parent.mkdir(parents=True, exist_ok=True)
         DEBUG.write_text(html, encoding="utf-8")
-
         raise RuntimeError(
-            "No recognizable events extracted. "
-            "State preserved. Inspect debug HTML."
+            "No recognizable events extracted. State preserved. Inspect debug HTML."
         )
 
     previous = (
@@ -399,48 +410,37 @@ def main():
         if STATE.exists()
         else None
     )
-
     current = {event["id"] for event in events}
 
     if previous is None:
-        print(
-            f"Initial baseline: {len(events)} concerts recorded, "
-            "no notifications sent."
-        )
-        save_state(current, events)
+        print(f"Initial baseline: {len(events)} concerts recorded, no notifications sent.")
+        save_state(current, events, first_seen={})
         return
 
     known = set(previous.get("known_ids", []))
     pending = previous.get("pending_notifications", {})
-
     if not isinstance(pending, dict):
-        raise RuntimeError(
-            "Invalid pending_notifications in state file."
-        )
+        raise RuntimeError("Invalid pending_notifications in state file.")
 
-    new_events = [
-        event for event in events
-        if event["id"] not in known
-    ]
-
-    print(
-        f"{len(events)} currently found; "
-        f"{len(new_events)} not yet fully notified."
-    )
-
-    # Keep pending alerts even if the event temporarily
-    # disappears from the website.
+    first_seen = previous.get("first_seen", {})
+    if not isinstance(first_seen, dict):
+        raise RuntimeError("Invalid first_seen in state file.")
+    # Older concerts stay historical: do not invent a discovery timestamp.
+    discovered_at = datetime.now(timezone.utc).isoformat()
+    new_events = [event for event in events if event["id"] not in known]
     for event in new_events:
-        pending.setdefault(
-            event["id"],
-            {
-                "event": event,
-                "delivered": [],
-            },
-        )
+        first_seen.setdefault(event["id"], discovered_at)
+    for event_id in pending:
+        first_seen.setdefault(event_id, discovered_at)
 
-    # Save the notification queue before sending.
-    save_state(known, events, pending)
+    print(f"{len(events)} currently found; {len(new_events)} not yet fully notified.")
+
+    # Retain previously pending events even if temporarily removed from the page.
+    for event in new_events:
+        pending.setdefault(event["id"], {"event": event, "delivered": []})
+
+    # Persist the queue before making network requests.
+    save_state(known, events, pending, first_seen)
 
     for event_id in list(pending):
         item = pending[event_id]
@@ -451,21 +451,20 @@ def main():
             send_discord(event, webhook)
             delivered.add("discord")
             item["delivered"] = sorted(delivered)
-            save_state(known, events, pending)
+            save_state(known, events, pending, first_seen)
 
         if "telegram" not in delivered:
             send_telegram(event, bot_token, chat_id)
             delivered.add("telegram")
             item["delivered"] = sorted(delivered)
-            save_state(known, events, pending)
+            save_state(known, events, pending, first_seen)
 
-        # Only mark the event fully processed once
-        # both notification channels have succeeded.
+        # Mark fully processed only after both destinations accept the event.
         known.add(event_id)
         del pending[event_id]
-        save_state(known, events, pending)
+        save_state(known, events, pending, first_seen)
 
-    save_state(known, events, pending)
+    save_state(known, events, pending, first_seen)
 
 
 if __name__ == "__main__":
