@@ -17,7 +17,7 @@
     "dccfa39320035708f4c4",
     "f1862e2db218262d3173"
   ],
-  "last_seen": "2026-10-30T01:09:16.176144+00:00",
+  "last_seen": "2026-10-30T03:15:49.681540+00:00",
   "current_events": [
     {
       "date": "2026-10-30T20:00:00",
@@ -124,5 +124,6 @@
       "url": "https://www.bandsintown.com/e/109048807",
       "id": "aca77504f70da76807bd"
     }
-  ]
+  ],
+  "pending_notifications": {}
 }
