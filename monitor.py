@@ -10,7 +10,7 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urljoin, urlparse
-from urllib.parse import urlunparse
+from urllib.parse import parse_qs, unquote
 
 import requests
 from bs4 import BeautifulSoup
@@ -20,6 +20,7 @@ from playwright.sync_api import sync_playwright
 URL = "https://www.borisbrejcha.de/dates"
 STATE = Path("data/events.json")
 DEBUG = Path("data/debug.html")
+TICKET_DEBUG = Path("data/ticket_debug.json")
 
 DATE_RE = re.compile(
     r"\b(?:20\d{2}[-/.]\d{1,2}[-/.]\d{1,2}|"
@@ -148,6 +149,185 @@ def ticket_cta_candidates(page):
     return [href for _, href in sorted(set(found))]
 
 
+def _ticket_candidates_in_frame(frame):
+    """Read ticket CTAs and their nearby event context, without clicking anything."""
+    try:
+        return frame.locator('a[href], [role="button"], button, [onclick]').evaluate_all(r"""els => {
+          const text = el => (el?.innerText || el?.textContent || '').trim().replace(/\s+/g, ' ');
+          const ticket = /\b(ticket(s)?|buy ticket(s)?|get ticket(s)?|entradas|billets|karten|boletos)\b/i;
+          const out = [];
+          for (const el of els) {
+            const label = [text(el), el.getAttribute('aria-label'), el.getAttribute('title'),
+                           el.getAttribute('data-testid')].filter(Boolean).join(' ').slice(0, 160);
+            if (!ticket.test(label) || /\brsvp\b/i.test(label)) continue;
+            const href = el.href || el.getAttribute('data-href') || el.getAttribute('data-url') || '';
+            // Select the nearest reasonably sized event row, not the whole widget/page.
+            let row = el;
+            for (let i = 0; i < 7 && row.parentElement; i++) {
+              const parent = row.parentElement;
+              const t = text(parent);
+              if (t.length > 700) break;
+              row = parent;
+              if (t.length >= 25 && /\b20\d{2}\b/.test(t)) break;
+            }
+            const anchors = [...row.querySelectorAll('a[href]')].slice(0, 20).map(a => a.href);
+            const times = [...row.querySelectorAll('time[datetime]')].map(t => t.getAttribute('datetime'));
+            const attrs = ['data-event-id','data-id','data-date','data-start-date'].map(k => row.getAttribute(k) || '');
+            out.push({href, label, context: text(row).slice(0, 500), anchors, times, attrs});
+          }
+          return out.slice(0, 120);
+        }""")
+    except Exception:
+        return []
+
+
+def _ticket_href(item):
+    """Choose only a ticket CTA URL; retain tracking query parameters."""
+    links = [item.get('href', '')]
+    links.extend(item.get('anchors', []))
+    for raw in links:
+        raw = str(raw or '')
+        if raw.startswith('/'):
+            raw = urljoin(URL, raw)
+        if not raw.startswith('https://') or EVENT_PAGE_RE.match(raw):
+            continue
+        if TRACKING_RE.match(raw) or safe_ticket_url(raw):
+            # Never use arbitrary sibling links as tickets: only the CTA itself,
+            # unless the CTA is a button with no href and a tracking link nearby.
+            if raw == links[0] or (not links[0] and TRACKING_RE.match(raw)):
+                return raw
+    return ''
+
+
+def _event_reference_ids(text):
+    """Extract Bandsintown event IDs from URLs, not our SHA event IDs."""
+    ids = set()
+    for value in re.findall(r'https?://[^\s\"<>]+', str(text or '')):
+        value = value.rstrip('),;')
+        parsed = urlparse(value)
+        m = re.search(r'/(?:e|event)/(\d+)', parsed.path)
+        if m:
+            ids.add(m.group(1))
+        for key in ('event_id', 'eventId'):
+            ids.update(x for x in parse_qs(parsed.query).get(key, []) if x.isdigit())
+    return ids
+
+
+def _match_official_ctas(events, items):
+    """Conservative matching: unique Bandsintown ID, or unique date + venue.
+
+    Ambiguous matches are deliberately skipped rather than assigning a wrong seller.
+    """
+    matches = {}
+    diagnostics = []
+    for item in items:
+        href = _ticket_href(item)
+        if not href:
+            diagnostics.append({'result': 'no_ticket_href', 'label': item.get('label', '')})
+            continue
+        candidates = []
+        references = _event_reference_ids(' '.join([item.get('href','')] + item.get('anchors', [])))
+        if references:
+            candidates = [e for e in events if references & _event_reference_ids(e.get('url', ''))]
+        if not candidates:
+            context = ' '.join([item.get('context', '')] + item.get('times', []) + item.get('attrs', [])).casefold()
+            for e in events:
+                date = e.get('date', '')[:10]
+                if not date:
+                    continue
+                # Date formats are often 2027-08-07 or 07.08.2027 in the widget.
+                ymd = date.split('-')
+                forms = [date]
+                if len(ymd) == 3:
+                    forms += [f'{ymd[2]}.{ymd[1]}.{ymd[0]}', f'{int(ymd[2])}.{int(ymd[1])}.{ymd[0]}']
+                if not any(f.casefold() in context for f in forms):
+                    continue
+                # Require venue or a distinctive title token; date alone can be ambiguous.
+                venue = re.sub(r'^boris brejcha\s*@\s*', '', e.get('title', ''), flags=re.I).strip().casefold()
+                location = e.get('location', '').casefold()
+                venue_parts = [venue] + [x.strip() for x in re.split(r',', location) if len(x.strip()) >= 5]
+                if any(len(v) >= 5 and v in context for v in venue_parts):
+                    candidates.append(e)
+        if len(candidates) != 1:
+            diagnostics.append({'result': 'ambiguous' if candidates else 'unmatched', 'label': item.get('label', ''), 'matches': len(candidates)})
+            continue
+        event = candidates[0]
+        matches.setdefault(event['id'], []).append(href)
+        diagnostics.append({'result': 'matched', 'event_id': event['id'], 'label': item.get('label', '')})
+    # Multiple different CTA URLs for one event may be legitimate ticket tiers.
+    # Only accept an unambiguous single URL.
+    matches = {eid: links[0] for eid, links in matches.items() if len(set(links)) == 1}
+    return matches, diagnostics
+
+
+def fetch_official_ticket_ctas():
+    """Capture ticket buttons on the official rendered page and embedded widgets."""
+    items = []
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            context = browser.new_context(locale='en-US')
+            page = context.new_page()
+            try:
+                page.goto(URL, wait_until='domcontentloaded', timeout=45000)
+                page.wait_for_timeout(5000)
+                for _ in range(5):
+                    page.mouse.wheel(0, 1700)
+                    page.wait_for_timeout(500)
+                for frame in page.frames:
+                    items.extend(_ticket_candidates_in_frame(frame))
+            finally:
+                browser.close()
+    except Exception as exc:
+        print(f'Official ticket CTA capture unavailable ({type(exc).__name__})')
+    print(f'Official ticket CTAs detected: {len(items)}')
+    return items
+
+
+def _browser_resolve_tracking(page, raw):
+    """Fallback for JS redirects. Never click purchase, login or checkout controls."""
+    if not TRACKING_RE.match(raw):
+        return ''
+    try:
+        page.goto(raw, wait_until='domcontentloaded', timeout=12000)
+        page.wait_for_timeout(1200)
+        return safe_ticket_url(page.url)
+    except Exception:
+        return safe_ticket_url(page.url) if page.url != raw else ''
+
+
+def discover_official_tickets(events):
+    items = fetch_official_ticket_ctas()
+    matches, diagnostics = _match_official_ctas(events, items)
+    resolved = 0
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            context = browser.new_context(locale='en-US')
+            page = context.new_page()
+            try:
+                for event in events:
+                    if event.get('ticket_url') or event['id'] not in matches:
+                        continue
+                    raw = matches[event['id']]
+                    direct = resolve_ticket_url_http(raw)
+                    if not direct:
+                        direct = _browser_resolve_tracking(page, raw)
+                    if direct:
+                        event['ticket_url'] = direct
+                        event['ticket_provider'] = urlparse(direct).hostname or ''
+                        resolved += 1
+            finally:
+                browser.close()
+    except Exception as exc:
+        print(f'Official ticket resolution unavailable ({type(exc).__name__})')
+    print(f'Official CTA matches: {len(matches)}; direct URLs resolved: {resolved}')
+    # Diagnostics do not contain tracking URLs (which can contain personal tokens).
+    TICKET_DEBUG.parent.mkdir(parents=True, exist_ok=True)
+    TICKET_DEBUG.write_text(json.dumps({'cta_count': len(items), 'matches': len(matches),
+                                         'resolved': resolved, 'diagnostics': diagnostics[:100]}, indent=2) + '\n', encoding='utf-8')
+
+
 def discover_event_ticket_urls(events):
     """Enrich every missing concert, including existing events, best effort.
 
@@ -242,6 +422,7 @@ def enrich_tickets(events):
             event["ticket_provider"] = urlparse(event["ticket_url"]).hostname or ""
         else:
             event["ticket_provider"] = ""
+    discover_official_tickets(events)
     discover_event_ticket_urls(events)
     found = sum(bool(e.get("ticket_url")) for e in events)
     print(f"Ticket discovery summary: {found}/{len(events)} events have direct ticket URLs")
