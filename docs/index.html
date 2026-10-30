@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1020">
+  <meta name="description" content="Unofficial Boris Brejcha concert dates dashboard, updated by an automated monitor.">
+  <title>Boris Brejcha — Concert Tracker</title>
+  <style>
+    :root { color-scheme: dark; font-family: Inter, system-ui, -apple-system, Segoe UI, sans-serif; background: #0b1020; color: #eef2ff; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: radial-gradient(ellipse at top right, #25204e 0%, #0b1020 48%); }
+    main { max-width: 1140px; padding: 42px 20px 80px; margin: auto; }
+    header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
+    .eyebrow { color: #a7a9ff; text-transform: uppercase; font-size: .75rem; font-weight: 750; letter-spacing: .2em; }
+    h1 { font-size: clamp(2.1rem, 5vw, 4rem); margin: 10px 0; letter-spacing: -.045em; line-height: 1.06; }
+    .intro, .muted { color: #b2bdd4; }
+    .intro { max-width: 650px; line-height: 1.65; }
+    a { color: #c6c4ff; }
+    .source { border: 1px solid #3e4267; border-radius: 999px; padding: 11px 17px; text-decoration: none; white-space: nowrap; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 34px 0; }
+    .stat, .panel, .event { background: #151d32e8; border: 1px solid #303a57; border-radius: 17px; }
+    .stat { padding: 23px; }
+    .stat strong { display: block; font-size: 2rem; margin-bottom: 6px; }
+    .stat span { color: #b2bdd4; font-size: .87rem; }
+    .panel { padding: 20px; margin-bottom: 22px; }
+    .filters { display: grid; grid-template-columns: 1fr 220px; gap: 14px; }
+    input, select { width: 100%; background: #0d1427; border: 1px solid #445070; color: #fff; border-radius: 10px; padding: 13px 14px; font: inherit; }
+    input:focus, select:focus { outline: 2px solid #9e96ff; outline-offset: 1px; }
+    .section-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin: 20px 0; }
+    h2 { margin: 0; font-size: 1.3rem; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .event { padding: 22px; display: flex; flex-direction: column; gap: 12px; }
+    .event .date { color: #b9afff; font-size: .83rem; font-weight: 750; text-transform: uppercase; letter-spacing: .08em; }
+    .event h3 { margin: 0; font-size: 1.17rem; line-height: 1.4; overflow-wrap: anywhere; }
+    .event p { margin: 0; color: #b2bdd4; overflow-wrap: anywhere; }
+    .event a { margin-top: auto; align-self: flex-start; text-decoration: none; font-weight: 650; padding-top: 8px; }
+    .empty { padding: 36px 22px; text-align: center; color: #c0c9df; border: 1px dashed #526080; border-radius: 15px; }
+    footer { color: #8997b5; margin-top: 44px; font-size: .85rem; line-height: 1.6; }
+    @media(max-width: 700px) { .stats { grid-template-columns: 1fr; } .filters, .grid { grid-template-columns: 1fr; } .stat { padding: 17px; } main { padding-top: 28px; } }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <div class="eyebrow">Unofficial concert tracker</div>
+      <h1>Boris Brejcha<br>Concert Dashboard</h1>
+      <p class="intro">Upcoming dates detected from the official tour page. Automatically refreshed when the concert monitor successfully publishes its latest results.</p>
+    </div>
+    <a class="source" href="https://www.borisbrejcha.de/dates" target="_blank" rel="noopener noreferrer">Official tour dates ↗</a>
+  </header>
+  <section class="stats" aria-label="Dashboard summary">
+    <div class="stat"><strong id="upcoming">—</strong><span>Upcoming concerts</span></div>
+    <div class="stat"><strong id="total">—</strong><span>Events in latest scan</span></div>
+    <div class="stat"><strong id="updated" style="font-size:1.05rem;line-height:2.4">—</strong><span>Last monitor check (UTC)</span></div>
+  </section>
+  <section class="panel" aria-label="Filter concerts">
+    <div class="filters">
+      <label><span class="muted">Search event or location</span><input id="search" type="search" placeholder="Try Berlin, Poland, festival…" autocomplete="off"></label>
+      <label><span class="muted">Show concerts</span><select id="range"><option value="upcoming">Upcoming only</option><option value="all">All currently listed</option></select></label>
+    </div>
+  </section>
+  <div class="section-head"><h2>Concerts</h2><span class="muted" id="shown" aria-live="polite">Loading…</span></div>
+  <section id="events" class="grid" aria-live="polite"><div class="empty">Loading concert data…</div></section>
+  <footer>Unofficial fan project. Concert dates may change. Always verify event details and tickets on the official website. Times are interpreted from the date information provided by the source; events without a recognizable date may not be included in the upcoming count.</footer>
+</main>
+<script>
+(() => {
+  'use strict';
+  const el = id => document.getElementById(id);
+  let events = [];
+  function dateOnly(raw) {
+    const match = String(raw || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!match) return null;
+    const y = Number(match[1]), m = Number(match[2]), d = Number(match[3]);
+    const date = new Date(Date.UTC(y, m - 1, d));
+    return date.getUTCFullYear() === y && date.getUTCMonth() === m - 1 && date.getUTCDate() === d ? date : null;
+  }
+  function isUpcoming(e) {
+    const date = dateOnly(e.date);
+    if (!date) return false;
+    const now = new Date();
+    const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+    return date.getTime() >= today;
+  }
+  function safeUrl(raw) {
+    try { const u = new URL(raw || '', 'https://www.borisbrejcha.de/dates'); return ['http:', 'https:'].includes(u.protocol) ? u.href : 'https://www.borisbrejcha.de/dates'; }
+    catch { return 'https://www.borisbrejcha.de/dates'; }
+  }
+  function draw() {
+    const q = el('search').value.trim().toLocaleLowerCase();
+    const selected = el('range').value;
+    const visible = events.filter(e => (selected === 'all' || isUpcoming(e)) && [e.title, e.location, e.date].some(x => String(x || '').toLocaleLowerCase().includes(q)));
+    el('shown').textContent = `${visible.length} shown`;
+    const list = el('events');
+    list.replaceChildren();
+    if (!visible.length) {
+      const empty = document.createElement('div'); empty.className = 'empty';
+      empty.textContent = events.length ? 'No concerts match these filters.' : 'No concert events available.';
+      list.append(empty); return;
+    }
+    for (const event of visible) {
+      const card = document.createElement('article'); card.className = 'event';
+      const date = document.createElement('div'); date.className = 'date'; date.textContent = event.date || 'Date not provided';
+      const title = document.createElement('h3'); title.textContent = event.title || 'Boris Brejcha concert';
+      const place = document.createElement('p'); place.textContent = `📍 ${event.location || 'Location not provided'}`;
+      const link = document.createElement('a'); link.href = safeUrl(event.url); link.target = '_blank'; link.rel = 'noopener noreferrer'; link.textContent = 'Event details ↗';
+      card.append(date, title, place, link); list.append(card);
+    }
+  }
+  async function load() {
+    try {
+      const response = await fetch('./events.json', {cache: 'no-store'});
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      if (!Array.isArray(data.current_events)) throw new Error('Missing current_events array');
+      events = data.current_events.filter(e => e && typeof e === 'object').sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')));
+      el('total').textContent = String(events.length);
+      el('upcoming').textContent = String(events.filter(isUpcoming).length);
+      const checked = data.last_seen ? new Date(data.last_seen) : null;
+      el('updated').textContent = checked && !Number.isNaN(checked.getTime()) ? checked.toLocaleString('en-GB', {timeZone:'UTC', dateStyle:'medium', timeStyle:'short'}) : 'Unknown';
+      draw();
+    } catch (err) {
+      el('shown').textContent = 'Unable to load';
+      el('events').replaceChildren();
+      const warning = document.createElement('div'); warning.className = 'empty';
+      warning.textContent = 'Concert data could not be loaded. Please try again later.';
+      el('events').append(warning);
+      console.error('Dashboard data load failed:', err);
+    }
+  }
+  el('search').addEventListener('input', draw);
+  el('range').addEventListener('change', draw);
+  load();
+})();
+</script>
+</body>
+</html>
