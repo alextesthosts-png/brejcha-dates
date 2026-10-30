@@ -34,10 +34,16 @@ input,select{display:block;width:100%;margin-top:5px;background:#10121a;border:1
 .acts{display:flex;gap:8px;flex-wrap:wrap}.host{font-size:.85rem;color:var(--soft)}
 .trip{padding:16px 18px;background:var(--bone2);border-radius:0 14px 14px 0;display:grid;gap:8px;align-content:start}
 .fare{font:800 2rem/1 var(--disp);letter-spacing:.02em}.sub{font-size:.85rem;color:var(--soft)}
+.budgetbar{margin-top:12px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:15px 16px}
+.budgetbar h2{font-size:1.05rem;margin:0 0 4px}.budgetfields{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:12px}
+.budgetfields input{max-width:100%}.budgethint{font-size:.82rem;color:var(--mut);margin-top:9px}
+.budgettotal{font:800 1.6rem/1.15 var(--disp);color:var(--ink)}
+.weatherline{font-size:.83rem;color:var(--soft)}.weatherline button{font:inherit;color:var(--ink);background:transparent;border:0;padding:0;text-decoration:underline;cursor:pointer}
+.place a{color:var(--uv);font-weight:700;text-decoration:underline;text-underline-offset:2px}
 .empty{padding:28px;border:1px dashed #555a70;border-radius:14px;color:var(--mut)}
 footer{margin-top:40px;color:var(--mut);font-size:.85rem;max-width:80ch}
 @media(max-width:860px){.bar{grid-template-columns:1fr 1fr}.hero{grid-template-columns:1fr}.facts{padding:12px 0 0;border-left:0;border-top:2px solid var(--line)}}
-@media(max-width:700px){:root{--sw:74px}.stub{grid-template-columns:var(--sw) 1fr}.trip{grid-column:1/-1;border-radius:0 0 14px 14px;border-top:2px dashed #b4b0a2}.bar{grid-template-columns:1fr}}
+@media(max-width:700px){.budgetfields{grid-template-columns:1fr 1fr}:root{--sw:74px}.stub{grid-template-columns:var(--sw) 1fr}.trip{grid-column:1/-1;border-radius:0 0 14px 14px;border-top:2px dashed #b4b0a2}.bar{grid-template-columns:1fr}}
 </style>
 </head>
 <body><div class="wrap">
@@ -50,6 +56,17 @@ footer{margin-top:40px;color:var(--mut);font-size:.85rem;max-width:80ch}
 <label>Country<select id="country"><option value="">All countries</option></select></label>
 <label>Show<select id="show"><option value="up">Upcoming</option><option value="new">New this week</option><option value="all">All listed</option></select></label>
 <label>Sort by<select id="sort"><option value="date">Date</option><option value="new">Newly announced</option><option value="near">Nearest to me</option><option value="cheap">Cheapest to reach</option><option value="country">Country</option></select></label>
+</section>
+<section class="budgetbar" aria-label="Trip budget calculator">
+<h2>Trip budget calculator</h2>
+<p class="note" style="margin:0">Enter your own ticket, hotel and local expenses. Each concert shows an estimated total including the existing rough flight range.</p>
+<div class="budgetfields">
+<label>Ticket (€)<input id="budgetTicket" type="number" min="0" step="1" value="0" inputmode="decimal"></label>
+<label>Hotel per night (€)<input id="budgetHotel" type="number" min="0" step="1" value="0" inputmode="decimal"></label>
+<label>Nights<select id="budgetNights"><option value="0">0 nights</option><option value="1">1 night</option><option value="2" selected>2 nights</option><option value="3">3 nights</option><option value="4">4 nights</option><option value="5">5 nights</option></select></label>
+<label>Other costs (€)<input id="budgetOther" type="number" min="0" step="1" value="0" inputmode="decimal"></label>
+</div>
+<p class="budgethint">Amounts are per person in EUR. Enter 0 for unknown costs; the result is a planning scenario, not a price quote. Flight estimates are not live fares.</p>
 </section>
 <p class="note">Travel prices are rough estimates from distance, for the day before to the day after each show. Use “Live fares” for real prices. <span id="shown" aria-live="polite"></span></p>
 <div id="list"><p class="empty">Loading concert data…</p></div>
@@ -141,19 +158,49 @@ const eu=p=>p.la>35&&p.la<71&&p.lo>-11&&p.lo<32;
 function fare(km,rt){let lo,hi;if(km<=4000){lo=40+.05*km;hi=80+.12*km}else{lo=200+.06*km;hi=350+.14*km}if(!rt){lo*=.55;hi*=.55}const r=x=>x>250?Math.round(x/10)*10:Math.round(x/5)*5;return[r(lo),r(hi)]}
 const h=(t,c,...k)=>{const n=document.createElement(t);if(c)n.className=c;for(const x of k.flat())if(x!=null&&x!==false&&x!=='')n.append(x);return n};
 const a=(href,c,txt)=>{const n=h('a',c,txt);n.href=href;n.target='_blank';n.rel='noopener noreferrer';return n};
+const money=n=>'€'+Math.round(n).toLocaleString('en-GB');
+const budget=()=>{const val=id=>Math.max(0,Number($(id).value)||0);return val('budgetTicket')+val('budgetHotel')*val('budgetNights')+val('budgetOther')};
+const maps=e=>'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent([e.location,e.country].filter(Boolean).join(', '));
+const weatherCache=new Map();
+const weatherDesc=c=>({0:'Clear sky',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',45:'Fog',48:'Rime fog',51:'Light drizzle',53:'Drizzle',55:'Heavy drizzle',61:'Light rain',63:'Rain',65:'Heavy rain',71:'Light snow',73:'Snow',75:'Heavy snow',80:'Rain showers',81:'Rain showers',82:'Heavy showers',95:'Thunderstorms'})[c]||'Variable conditions';
+async function loadWeather(e,target){
+ const d=e._d,k=e._k;
+ if(!d||!k){target.textContent='Forecast unavailable: destination not mapped.';return}
+ const days=Math.round((utc(k)-utc(today))/864e5);
+ if(days<0||days>15){target.textContent='Forecast available only within about 16 days of the concert.';return}
+ target.textContent='Loading forecast…';
+ try{
+  const key=d.c+':'+k;
+  if(!weatherCache.has(key)){
+   const endpoint='https://api.open-meteo.com/v1/forecast?latitude='+encodeURIComponent(d.la)+'&longitude='+encodeURIComponent(d.lo)+'&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&timezone=auto&forecast_days=16';
+   const response=await fetch(endpoint,{signal:AbortSignal.timeout(10000)});
+   if(!response.ok)throw Error('Weather service HTTP '+response.status);
+   const data=await response.json();weatherCache.set(key,data);
+  }
+  const data=weatherCache.get(key),idx=data.daily?.time?.indexOf(k)??-1;
+  if(idx<0){target.textContent='Forecast not available for this date yet.';return}
+  const v=data.daily,low=v.temperature_2m_min[idx],high=v.temperature_2m_max[idx],rain=v.precipitation_probability_max[idx];
+  target.textContent=`${weatherDesc(v.weather_code[idx])} · ${Math.round(low)}–${Math.round(high)}°C · Rain chance ${rain}% (near ${d.n} airport)`;
+ }catch(err){console.warn('Weather request failed',err);target.textContent='Weather unavailable right now; try again later.'}
+}
+
 function vp(e){const v=(e.title||'').replace(/^boris brejcha\s*@\s*/i,'').trim()||'Boris Brejcha';let p=(e.location||'').trim();if(p.toLowerCase().startsWith(v.toLowerCase()))p=p.slice(v.length).replace(/^[\s,;-]+/,'');return[v,p||e.country||'Location not listed']}
 function row(e,o,rt){
  const[venue,place]=vp(e),tk=url(e.ticket_url),via=url(e.ticket_tracking_url),det=url(e.url),tm=(String(e.date).match(/T(\d\d:\d\d)/)||[])[1],k=e._k;
  const when=h('div','when',h('span','dow',k&&fmt(k,{weekday:'short'})),h('b','day',k?String(+k.slice(8)):'?'),h('span','mon',k&&fmt(k,{month:'short'})));
  const tags=h('p','tags',isNew(e)&&h('span','tag new','New this week'),!up(e)&&h('span','tag','Past'),tm&&tm!=='00:00'&&h('span','tag','Listed at '+tm),e.organizer&&!/^boris brejcha$/i.test(e.organizer)&&h('span','tag','By '+e.organizer));
  const buy=tk||via,host=tk?'Tickets from '+(e.ticket_provider||new URL(tk).hostname):via?'Ticket link opens through Bandsintown':'Ticket link not available yet';
- const info=h('div','info',h('h3',0,venue),h('p','place',place),tags,h('div','acts',buy&&a(buy,'btn p','Buy tickets'),det&&a(det,'btn','Event page')),h('p','host',host));
- const d=e._d;let trip;
+ const info=h('div','info',h('h3',0,venue),h('p','place',place,' · ',a(maps(e),'','View on Google Maps ↗')),tags,h('div','acts',buy&&a(buy,'btn p','Buy tickets'),det&&a(det,'btn','Event page')),h('p','host',host));
+ const weather=h('p','weatherline');
+ if(up(e)&&e._d){const days=Math.round((utc(k)-utc(today))/864e5);if(days<=15){const b=h('button',0,'Check local forecast');b.type='button';b.addEventListener('click',()=>loadWeather(e,weather));weather.append('☁ ',b)}else weather.textContent='☁ Local weather forecast available about 16 days before the show.'}
+ else if(up(e))weather.textContent='☁ Weather unavailable: destination not mapped.';
+ info.append(weather);
+ const d=e._d;let trip;const extra=budget();
  if(!up(e))trip=h('div','trip',h('p','sub','This show has already happened.'));
- else if(!o||!d)trip=h('div','trip',h('p','sub',o?'No airport mapped for this city yet.':'Choose a departure airport.'));
+ else if(!o||!d)trip=h('div','trip',h('p','budgettotal',money(extra)+' + travel'),h('p','sub',o?'No airport mapped for this city yet.':'Choose a departure airport.'),h('p','sub','Trip budget excludes transport until a destination is mapped.'));
  else{const km=Math.round(hav(o,d)),near=km<250,[lo,hi]=fare(km,rt);
   const fl='https://www.google.com/travel/flights?q='+encodeURIComponent(`Flights from ${o.c} to ${d.c} on ${shift(k,-1)}`+(rt?` through ${shift(k,1)}`:' one way'));
-  trip=h('div','trip',h('p','fare',near?'Close by':`€${lo}–${hi}`),h('p','sub',near?`${km} km from ${o.n}. Train or car is easier.`:`Estimated ${rt?'round trip':'one way'}, ${o.c} to ${d.c}, ${km.toLocaleString('en-GB')} km`),
+  trip=h('div','trip',h('p','fare',near?'Close by':`€${lo}–${hi}`),h('p','budgettotal',near?money(extra)+' + ground travel':`${money(extra+lo)}–${money(extra+hi)} total`),h('p','sub',near?`${km} km from ${o.n}. Train or car is easier.`:`Estimated ${rt?'round trip':'one way'}, ${o.c} to ${d.c}, ${km.toLocaleString('en-GB')} km`),
    h('div','acts',!near&&a(fl,'btn','Live fares'),eu(o)&&eu(d)&&km<1500&&a('https://int.bahn.de/en','btn','Trains')))}
  return h('article','stub',when,info,trip)}
 let ev=[];
@@ -178,7 +225,7 @@ function hero(data){
 const save=(k,v)=>{try{localStorage.setItem(k,v)}catch{}},read=k=>{try{return localStorage.getItem(k)||''}catch{return''}};
 for(const o of Object.values(A).sort((x,y)=>x.n.localeCompare(y.n))){const op=h('option',0,`${o.n} (${o.c})`);op.value=o.c;$('from').append(op)}
 const sv=read('bb_origin');$('from').value=A[sv]?sv:'WAW';if(read('bb_trip'))$('trip').value=read('bb_trip');
-for(const id of['from','trip','q','country','show','sort'])$(id).addEventListener('input',()=>{if(id==='from')save('bb_origin',$('from').value);if(id==='trip')save('bb_trip',$('trip').value);render()});
+for(const id of['from','trip','q','country','show','sort','budgetTicket','budgetHotel','budgetNights','budgetOther'])$(id).addEventListener('input',()=>{if(id==='from')save('bb_origin',$('from').value);if(id==='trip')save('bb_trip',$('trip').value);render()});
 (async()=>{try{const r=await fetch('./events.json',{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);const data=await r.json();if(!Array.isArray(data.events))throw Error('Missing events');
  ev=data.events.filter(e=>e&&typeof e==='object');ev.forEach(e=>{e._k=ymd(e.date);e._d=dest(e)});
  for(const c of[...new Set(ev.map(e=>String(e.country||'').trim()).filter(Boolean))].sort()){const op=h('option',0,c);op.value=c;$('country').append(op)}
