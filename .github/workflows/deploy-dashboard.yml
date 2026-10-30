@@ -56,6 +56,7 @@ jobs:
                   'country': country,
                   'url': event.get('url', ''),
                   'ticket_url': event.get('ticket_url', ''),
+                  'ticket_provider': event.get('ticket_provider', ''),
                   'organizer': event.get('organizer', ''),
                   'first_seen': first_seen.get(event.get('id')),
               })
