@@ -149,14 +149,14 @@ def ticket_cta_candidates(page):
     return [href for _, href in sorted(set(found))]
 
 
-def _ticket_candidates_in_frame(frame):
+def _ticket_candidates_in_frame(frame, frame_index=0):
     """Read ticket CTAs and their nearby event context, without clicking anything."""
     try:
-        return frame.locator('a[href], [role="button"], button, [onclick]').evaluate_all(r"""els => {
+        items = frame.locator('a[href], [role="button"], button, [onclick]').evaluate_all(r"""els => {
           const text = el => (el?.innerText || el?.textContent || '').trim().replace(/\s+/g, ' ');
           const ticket = /\b(ticket(s)?|buy ticket(s)?|get ticket(s)?|entradas|billets|karten|boletos)\b/i;
           const out = [];
-          for (const el of els) {
+          for (const [elementIndex, el] of els.entries()) {
             const label = [text(el), el.getAttribute('aria-label'), el.getAttribute('title'),
                            el.getAttribute('data-testid')].filter(Boolean).join(' ').slice(0, 160);
             if (!ticket.test(label) || /\brsvp\b/i.test(label)) continue;
@@ -173,10 +173,15 @@ def _ticket_candidates_in_frame(frame):
             const anchors = [...row.querySelectorAll('a[href]')].slice(0, 20).map(a => a.href);
             const times = [...row.querySelectorAll('time[datetime]')].map(t => t.getAttribute('datetime'));
             const attrs = ['data-event-id','data-id','data-date','data-start-date'].map(k => row.getAttribute(k) || '');
-            out.push({href, label, context: text(row).slice(0, 500), anchors, times, attrs});
+            el.setAttribute('data-bb-ticket-v4', String(elementIndex));
+            out.push({href, label, context: text(row).slice(0, 500), anchors, times, attrs,
+                      element_index: elementIndex});
           }
           return out.slice(0, 120);
         }""")
+        for item in items:
+            item['frame_index'] = frame_index
+        return items
     except Exception:
         return []
 
@@ -260,69 +265,130 @@ def _match_official_ctas(events, items):
     return matches, diagnostics
 
 
-def fetch_official_ticket_ctas():
-    """Capture ticket buttons on the official rendered page and embedded widgets."""
-    items = []
+def _load_official_page(page):
+    page.goto(URL, wait_until='domcontentloaded', timeout=45000)
+    page.wait_for_timeout(5000)
+    for _ in range(5):
+        page.mouse.wheel(0, 1700)
+        page.wait_for_timeout(500)
+
+
+def _resolve_by_click(context, page, frame_index, element_index):
+    """Click the actual ticket CTA and observe its navigation or popup.
+
+    Never click RSVP, checkout, payment, or unrelated links. The caller supplies
+    a ticket-labeled CTA already matched uniquely to an event.
+    """
+    if frame_index >= len(page.frames):
+        return '', 'frame_missing'
+    frame = page.frames[frame_index]
+    locator = frame.locator(f'[data-bb-ticket-v4="{element_index}"]')
+    if locator.count() != 1:
+        return '', 'button_missing'
+    opened = []
+    def verified_destination(url):
+        candidate = safe_ticket_url(url)
+        host = (urlparse(candidate).hostname or '').lower()
+        if host in ('borisbrejcha.de', 'www.borisbrejcha.de'):
+            return ''
+        return candidate
+    def capture_popup(new_page):
+        opened.append(new_page)
+    context.on('page', capture_popup)
     try:
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
-            context = browser.new_context(locale='en-US')
-            page = context.new_page()
+        locator.click(timeout=4500, no_wait_after=True)
+        page.wait_for_timeout(1800)
+        # Popup may start at about:blank and navigate asynchronously.
+        for popup in opened[:3]:
             try:
-                page.goto(URL, wait_until='domcontentloaded', timeout=45000)
-                page.wait_for_timeout(5000)
-                for _ in range(5):
-                    page.mouse.wheel(0, 1700)
-                    page.wait_for_timeout(500)
-                for frame in page.frames:
-                    items.extend(_ticket_candidates_in_frame(frame))
-            finally:
-                browser.close()
+                popup.wait_for_load_state('domcontentloaded', timeout=3500)
+            except Exception:
+                pass
+            result = verified_destination(popup.url)
+            if result:
+                return result, 'popup'
+        result = verified_destination(page.url)
+        if result:
+            return result, 'same_tab'
+        # Sometimes a ticket CTA navigates inside its iframe.
+        for current_frame in page.frames:
+            result = verified_destination(current_frame.url)
+            if result:
+                return result, 'iframe'
+        return '', 'click_no_provider'
     except Exception as exc:
-        print(f'Official ticket CTA capture unavailable ({type(exc).__name__})')
-    print(f'Official ticket CTAs detected: {len(items)}')
-    return items
-
-
-def _browser_resolve_tracking(page, raw):
-    """Fallback for JS redirects. Never click purchase, login or checkout controls."""
-    if not TRACKING_RE.match(raw):
-        return ''
-    try:
-        page.goto(raw, wait_until='domcontentloaded', timeout=12000)
-        page.wait_for_timeout(1200)
-        return safe_ticket_url(page.url)
-    except Exception:
-        return safe_ticket_url(page.url) if page.url != raw else ''
+        return '', f'click_{type(exc).__name__}'
+    finally:
+        context.remove_listener('page', capture_popup)
+        for popup in opened:
+            try:
+                popup.close()
+            except Exception:
+                pass
 
 
 def discover_official_tickets(events):
-    items = fetch_official_ticket_ctas()
-    matches, diagnostics = _match_official_ctas(events, items)
+    """Match official ticket buttons, then click them in a real browser.
+
+    No external navigation is attempted for unmatched/ambiguous buttons.
+    Diagnostics intentionally omit tracking URLs and query parameters.
+    """
+    items = []
+    matches = {}
+    diagnostics = []
     resolved = 0
     try:
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
-            context = browser.new_context(locale='en-US')
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(headless=True)
+            context = browser.new_context(locale='en-US', accept_downloads=False)
             page = context.new_page()
             try:
+                _load_official_page(page)
+                for frame_index, frame in enumerate(page.frames):
+                    items.extend(_ticket_candidates_in_frame(frame, frame_index))
+                matches, diagnostics = _match_official_ctas(events, items)
+                print(f'Official ticket CTAs detected: {len(items)}')
+                # Match item identity using the exact matched href and event reference.
                 for event in events:
                     if event.get('ticket_url') or event['id'] not in matches:
                         continue
-                    raw = matches[event['id']]
-                    direct = resolve_ticket_url_http(raw)
+                    href = matches[event['id']]
+                    candidates = [item for item in items if _ticket_href(item) == href]
+                    if len(candidates) != 1:
+                        diagnostics.append({'result': 'duplicate_button', 'event_id': event['id']})
+                        continue
+                    item = candidates[0]
+                    direct = resolve_ticket_url_http(href)
+                    method = 'http' if direct else ''
                     if not direct:
-                        direct = _browser_resolve_tracking(page, raw)
+                        # Refresh before each click: previous click can navigate away.
+                        _load_official_page(page)
+                        fresh = []
+                        for frame_index, frame in enumerate(page.frames):
+                            fresh.extend(_ticket_candidates_in_frame(frame, frame_index))
+                        # Ensure the same unique matched CTA exists in the refreshed DOM.
+                        fresh_matches, _ = _match_official_ctas(events, fresh)
+                        if fresh_matches.get(event['id']) == href:
+                            buttons = [x for x in fresh if _ticket_href(x) == href]
+                            if len(buttons) == 1:
+                                button = buttons[0]
+                                direct, method = _resolve_by_click(context, page, button['frame_index'], button['element_index'])
+                            else:
+                                method = 'button_ambiguous'
+                        else:
+                            method = 'button_changed'
                     if direct:
                         event['ticket_url'] = direct
                         event['ticket_provider'] = urlparse(direct).hostname or ''
                         resolved += 1
+                        print(f"Ticket resolution: {event['id']} found {event['ticket_provider']} ({method})")
+                    else:
+                        print(f"Ticket resolution: {event['id']} unresolved ({method or 'http_no_redirect'})")
             finally:
                 browser.close()
     except Exception as exc:
         print(f'Official ticket resolution unavailable ({type(exc).__name__})')
     print(f'Official CTA matches: {len(matches)}; direct URLs resolved: {resolved}')
-    # Diagnostics do not contain tracking URLs (which can contain personal tokens).
     TICKET_DEBUG.parent.mkdir(parents=True, exist_ok=True)
     TICKET_DEBUG.write_text(json.dumps({'cta_count': len(items), 'matches': len(matches),
                                          'resolved': resolved, 'diagnostics': diagnostics[:100]}, indent=2) + '\n', encoding='utf-8')
