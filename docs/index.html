@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101116"><meta name="description" content="Unofficial Boris Brejcha tour tracker">
+<title>Boris Brejcha tour tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800&family=Hanken+Grotesk:wght@400;600;700&display=swap">
+<style>
+:root{--page:#101116;--panel:#1a1c25;--line:#2c2f3b;--bone:#eeece4;--bone2:#e2dfd4;--ink:#14151b;--soft:#5f5e58;--uv:#5a48ff;--amber:#ffb547;--txt:#ecebf2;--mut:#a4a7b8;--sw:92px;color-scheme:dark;
+--disp:'Big Shoulders Display','Barlow Condensed','Arial Narrow',Impact,sans-serif;--body:'Hanken Grotesk',system-ui,-apple-system,'Segoe UI',sans-serif}
+*{box-sizing:border-box}body{margin:0;background:var(--page);color:var(--txt);font:16px/1.5 var(--body)}
+.wrap{max-width:1040px;margin:auto;padding:24px 18px 70px}a{color:inherit}p{margin:0}
+:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.brand{font-weight:700;color:var(--mut)}
+.btn{display:inline-block;padding:9px 14px;border-radius:9px;border:1.5px solid var(--ink);font-weight:700;font-size:.9rem;text-decoration:none;color:var(--ink);background:transparent}
+.btn:hover{background:rgba(20,21,27,.08)}.btn.p{background:var(--uv);border-color:var(--uv);color:#fff}.btn.p:hover{background:#4636e6}
+.btn.ghost{border-color:#555a70;color:var(--txt)}.btn.ghost:hover{background:#232634}
+.hero{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:end;padding:44px 0 30px}
+.kick{color:var(--mut);font-weight:600}.count{font:800 clamp(4.2rem,15vw,9.5rem)/.9 var(--disp);color:var(--amber);margin:4px 0 10px}
+.where{font-size:1.25rem;font-weight:600;max-width:34ch}.facts{list-style:none;margin:0;padding:0 0 0 20px;border-left:2px solid var(--line);color:var(--mut);display:grid;gap:6px}
+.bar{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;grid-template-columns:1.3fr .9fr 1.4fr 1fr 1fr 1.1fr;gap:12px}
+label{font-size:.85rem;color:var(--mut);font-weight:600}
+input,select{display:block;width:100%;margin-top:5px;background:#10121a;border:1px solid #444a60;border-radius:9px;padding:10px;color:var(--txt);font:inherit}
+.note{color:var(--mut);font-size:.88rem;margin:12px 2px 0}
+.month{display:flex;align-items:baseline;gap:12px;font:800 1.7rem/1 var(--disp);letter-spacing:.03em;margin:30px 0 12px}.month span{font:600 .9rem var(--body);color:var(--mut);letter-spacing:0}
+.stub{position:relative;display:grid;grid-template-columns:var(--sw) 1fr 260px;background:var(--bone);color:var(--ink);border-radius:14px;margin:0 0 12px}
+.stub::before,.stub::after{content:"";position:absolute;left:calc(var(--sw) - 9px);width:18px;height:18px;border-radius:50%;background:var(--page)}
+.stub::before{top:-9px}.stub::after{bottom:-9px}
+.when{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px 6px;border-right:2px dashed #b4b0a2;text-align:center;font-weight:700}
+.day{font:800 2.8rem/1 var(--disp)}.dow,.mon{font-size:.85rem;color:var(--soft)}
+.info{padding:16px 18px;display:grid;gap:8px;align-content:start}h3{margin:0;font-size:1.25rem;line-height:1.25;overflow-wrap:anywhere}
+.place{color:var(--soft)}.tags{display:flex;gap:6px;flex-wrap:wrap}.tag{background:#d9d5c8;border-radius:6px;padding:1px 8px;font-size:.8rem;font-weight:700}.tag.new{background:var(--amber)}
+.acts{display:flex;gap:8px;flex-wrap:wrap}.host{font-size:.85rem;color:var(--soft)}
+.trip{padding:16px 18px;background:var(--bone2);border-radius:0 14px 14px 0;display:grid;gap:8px;align-content:start}
+.fare{font:800 2rem/1 var(--disp);letter-spacing:.02em}.sub{font-size:.85rem;color:var(--soft)}
+.empty{padding:28px;border:1px dashed #555a70;border-radius:14px;color:var(--mut)}
+footer{margin-top:40px;color:var(--mut);font-size:.85rem;max-width:80ch}
+@media(max-width:860px){.bar{grid-template-columns:1fr 1fr}.hero{grid-template-columns:1fr}.facts{padding:12px 0 0;border-left:0;border-top:2px solid var(--line)}}
+@media(max-width:700px){:root{--sw:74px}.stub{grid-template-columns:var(--sw) 1fr}.trip{grid-column:1/-1;border-radius:0 0 14px 14px;border-top:2px dashed #b4b0a2}.bar{grid-template-columns:1fr}}
+</style>
+</head>
+<body><div class="wrap">
+<header class="top"><span class="brand">Boris Brejcha tour tracker (unofficial)</span><a class="btn ghost" href="https://www.borisbrejcha.de/dates" target="_blank" rel="noopener noreferrer">Official tour dates<span class="sr" hidden> (opens in new tab)</span></a></header>
+<section class="hero" aria-live="polite"><div><p class="kick">Next show</p><p class="count" id="count">…</p><p class="where" id="where">Loading tour dates</p></div><ul class="facts" id="facts"></ul></section>
+<section class="bar" aria-label="Filters and travel">
+<label>Fly from<select id="from"></select></label>
+<label>Trip<select id="trip"><option value="round">Round trip</option><option value="one">One way</option></select></label>
+<label>Search<input id="q" type="search" placeholder="Venue, city or country"></label>
+<label>Country<select id="country"><option value="">All countries</option></select></label>
+<label>Show<select id="show"><option value="up">Upcoming</option><option value="new">New this week</option><option value="all">All listed</option></select></label>
+<label>Sort by<select id="sort"><option value="date">Date</option><option value="new">Newly announced</option><option value="near">Nearest to me</option><option value="cheap">Cheapest to reach</option><option value="country">Country</option></select></label>
+</section>
+<p class="note">Travel prices are rough estimates from distance, for the day before to the day after each show. Use “Live fares” for real prices. <span id="shown" aria-live="polite"></span></p>
+<div id="list"><p class="empty">Loading concert data…</p></div>
+<footer>Unofficial fan project, not affiliated with Boris Brejcha. Dates, times and ticket links may change, so confirm details with the organizer before you travel. Times are as listed by the source. “New” means this tracker found the show in the last seven days.</footer>
+</div>
+<script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id);
+const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+const AL={usa:'united states',us:'united states',uk:'united kingdom',uae:'united arab emirates','czech republic':'czechia'};
+const cn=s=>{s=norm(s).trim();return AL[s]||s};
+const A={},byC={},keys=[];
+`WAW|Warsaw Chopin|warsaw,warszawa|Poland|52.17|20.97
+WMI|Warsaw Modlin|-|Poland|52.45|20.65
+KRK|Kraków|krakow,cracow|Poland|50.08|19.78
+GDN|Gdańsk|gdansk|Poland|54.38|18.47
+WRO|Wrocław|wroclaw|Poland|51.10|16.89
+BER|Berlin|berlin|Germany|52.36|13.50
+DRS|Dresden|dresden|Germany|51.13|13.77
+FRA|Frankfurt|frankfurt|Germany|50.03|8.57
+MUC|Munich|munich,munchen|Germany|48.35|11.79
+HAM|Hamburg|hamburg|Germany|53.63|9.99
+DUS|Düsseldorf|dusseldorf|Germany|51.29|6.77
+PRG|Prague|prague,praha|Czechia|50.10|14.26
+VIE|Vienna|vienna,wien|Austria|48.11|16.57
+GRZ|Graz|graz|Austria|46.99|15.44
+BUD|Budapest|budapest|Hungary|47.44|19.26
+ZRH|Zurich|zurich,bern,berne|Switzerland|47.46|8.55
+GVA|Geneva|geneva|Switzerland|46.24|6.11
+BSL|Basel|basel|Switzerland|47.59|7.53
+AMS|Amsterdam|amsterdam|Netherlands|52.31|4.76
+BRU|Brussels|brussels|Belgium|50.90|4.48
+CDG|Paris|paris|France|49.01|2.55
+LHR|London Heathrow|london|United Kingdom|51.47|-0.45
+MAN|Manchester|manchester|United Kingdom|53.35|-2.27
+DUB|Dublin|dublin|Ireland|53.42|-6.27
+MAD|Madrid|madrid|Spain|40.47|-3.56
+BCN|Barcelona|barcelona|Spain|41.30|2.08
+IBZ|Ibiza|ibiza|Spain|38.87|1.37
+LIS|Lisbon|lisbon,lisboa|Portugal|38.77|-9.13
+FCO|Rome|rome,roma|Italy|41.80|12.24
+MXP|Milan|milan,milano|Italy|45.63|8.72
+ATH|Athens|athens|Greece|37.94|23.94
+IST|Istanbul|istanbul|Turkey|41.26|28.74
+CPH|Copenhagen|copenhagen|Denmark|55.62|12.66
+ARN|Stockholm|stockholm|Sweden|59.65|17.92
+OSL|Oslo|oslo|Norway|60.19|11.10
+HEL|Helsinki|helsinki|Finland|60.32|24.96
+OTP|Bucharest|bucharest|Romania|44.57|26.10
+BEG|Belgrade|belgrade|Serbia|44.82|20.31
+JFK|New York JFK|new york|United States|40.64|-73.78
+LAX|Los Angeles|los angeles|United States|33.94|-118.41
+MIA|Miami|miami|United States|25.80|-80.29
+ORD|Chicago|chicago|United States|41.98|-87.90
+YUL|Montréal|montreal|Canada|45.47|-73.74
+YYZ|Toronto|toronto|Canada|43.68|-79.63
+YVR|Vancouver|vancouver|Canada|49.19|-123.18
+MEX|Mexico City|mexico city,ciudad de mexico|Mexico|19.44|-99.07
+GUA|Guatemala City|guatemala|Guatemala|14.58|-90.53
+BOG|Bogotá|bogota|Colombia|4.70|-74.15
+LIM|Lima|lima|Peru|-12.02|-77.11
+SCL|Santiago|santiago|Chile|-33.39|-70.79
+EZE|Buenos Aires|buenos aires|Argentina|-34.82|-58.54
+GRU|São Paulo|sao paulo,valinhos,campinas|Brazil|-23.44|-46.47
+DXB|Dubai|dubai|United Arab Emirates|25.25|55.37
+TLV|Tel Aviv|tel aviv|Israel|32.01|34.89
+HND|Tokyo Haneda|tokyo|Japan|35.55|139.78
+SIN|Singapore|singapore|Singapore|1.36|103.99
+BKK|Bangkok|bangkok|Thailand|13.69|100.75
+SYD|Sydney|sydney|Australia|-33.95|151.18
+MEL|Melbourne|melbourne|Australia|-37.67|144.84
+BNE|Brisbane|brisbane|Australia|-27.38|153.12
+PER|Perth|perth|Australia|-31.94|115.97
+ADL|Adelaide|adelaide|Australia|-34.95|138.53
+JNB|Johannesburg|johannesburg|South Africa|-26.14|28.25`.split('\n').forEach(l=>{const[c,n,k,co,la,lo]=l.split('|');const o={c,n,co,la:+la,lo:+lo};A[c]=o;if(!byC[norm(co)])byC[norm(co)]=o;k.split(',').forEach(x=>{if(x!=='-')keys.push([new RegExp('\\b'+x+'\\b'),x.length,o])})});
+keys.sort((a,b)=>b[1]-a[1]);
+const pad=n=>String(n).padStart(2,'0');
+const ymd=r=>{const m=String(r||'').match(/^\d{4}-\d\d-\d\d/);return m?m[0]:''};
+const utc=s=>{const[y,m,d]=s.split('-').map(Number);return Date.UTC(y,m-1,d)};
+const t0=new Date(),today=`${t0.getFullYear()}-${pad(t0.getMonth()+1)}-${pad(t0.getDate())}`;
+const shift=(s,n)=>new Date(utc(s)+n*864e5).toISOString().slice(0,10);
+const fmt=(s,o)=>new Intl.DateTimeFormat('en-GB',{...o,timeZone:'UTC'}).format(utc(s));
+const up=e=>e._k>=today;
+const isNew=e=>{const t=Date.parse(e.first_seen||'');return Number.isFinite(t)&&t<=Date.now()&&Date.now()-t<6048e5};
+const url=r=>{try{const u=new URL(r);return/^https?:$/.test(u.protocol)?u.href:''}catch{return''}};
+const dest=e=>{const t=norm((e.location||'')+' '+(e.title||''));for(const[r,,o]of keys)if(r.test(t))return o;return byC[cn(e.country)]||null};
+const hav=(a,b)=>{const R=Math.PI/180,x=(b.la-a.la)*R,y=(b.lo-a.lo)*R,s=Math.sin(x/2)**2+Math.cos(a.la*R)*Math.cos(b.la*R)*Math.sin(y/2)**2;return 12742*Math.asin(Math.sqrt(s))};
+const eu=p=>p.la>35&&p.la<71&&p.lo>-11&&p.lo<32;
+function fare(km,rt){let lo,hi;if(km<=4000){lo=40+.05*km;hi=80+.12*km}else{lo=200+.06*km;hi=350+.14*km}if(!rt){lo*=.55;hi*=.55}const r=x=>x>250?Math.round(x/10)*10:Math.round(x/5)*5;return[r(lo),r(hi)]}
+const h=(t,c,...k)=>{const n=document.createElement(t);if(c)n.className=c;for(const x of k.flat())if(x!=null&&x!==false&&x!=='')n.append(x);return n};
+const a=(href,c,txt)=>{const n=h('a',c,txt);n.href=href;n.target='_blank';n.rel='noopener noreferrer';return n};
+function vp(e){const v=(e.title||'').replace(/^boris brejcha\s*@\s*/i,'').trim()||'Boris Brejcha';let p=(e.location||'').trim();if(p.toLowerCase().startsWith(v.toLowerCase()))p=p.slice(v.length).replace(/^[\s,;-]+/,'');return[v,p||e.country||'Location not listed']}
+function row(e,o,rt){
+ const[venue,place]=vp(e),tk=url(e.ticket_url),via=url(e.ticket_tracking_url),det=url(e.url),tm=(String(e.date).match(/T(\d\d:\d\d)/)||[])[1],k=e._k;
+ const when=h('div','when',h('span','dow',k&&fmt(k,{weekday:'short'})),h('b','day',k?String(+k.slice(8)):'?'),h('span','mon',k&&fmt(k,{month:'short'})));
+ const tags=h('p','tags',isNew(e)&&h('span','tag new','New this week'),!up(e)&&h('span','tag','Past'),tm&&tm!=='00:00'&&h('span','tag','Listed at '+tm),e.organizer&&!/^boris brejcha$/i.test(e.organizer)&&h('span','tag','By '+e.organizer));
+ const buy=tk||via,host=tk?'Tickets from '+(e.ticket_provider||new URL(tk).hostname):via?'Ticket link opens through Bandsintown':'Ticket link not available yet';
+ const info=h('div','info',h('h3',0,venue),h('p','place',place),tags,h('div','acts',buy&&a(buy,'btn p','Buy tickets'),det&&a(det,'btn','Event page')),h('p','host',host));
+ const d=e._d;let trip;
+ if(!up(e))trip=h('div','trip',h('p','sub','This show has already happened.'));
+ else if(!o||!d)trip=h('div','trip',h('p','sub',o?'No airport mapped for this city yet.':'Choose a departure airport.'));
+ else{const km=Math.round(hav(o,d)),near=km<250,[lo,hi]=fare(km,rt);
+  const fl='https://www.google.com/travel/flights?q='+encodeURIComponent(`Flights from ${o.c} to ${d.c} on ${shift(k,-1)}`+(rt?` through ${shift(k,1)}`:' one way'));
+  trip=h('div','trip',h('p','fare',near?'Close by':`€${lo}–${hi}`),h('p','sub',near?`${km} km from ${o.n}. Train or car is easier.`:`Estimated ${rt?'round trip':'one way'}, ${o.c} to ${d.c}, ${km.toLocaleString('en-GB')} km`),
+   h('div','acts',!near&&a(fl,'btn','Live fares'),eu(o)&&eu(d)&&km<1500&&a('https://int.bahn.de/en','btn','Trains')))}
+ return h('article','stub',when,info,trip)}
+let ev=[];
+function render(){
+ const o=A[$('from').value],rt=$('trip').value==='round',q=norm($('q').value),c=$('country').value,s=$('show').value,so=$('sort').value;
+ const L=ev.filter(e=>(s==='all'||up(e))&&(s!=='new'||isNew(e))&&(!c||e.country===c)&&norm([e.title,e.location,e.country,e.organizer].join(' ')).includes(q));
+ L.forEach(e=>{e._km=o&&e._d?Math.round(hav(o,e._d)):null});
+ const dd=(x,y)=>x._k.localeCompare(y._k),cost=x=>x._km==null?1e9:fare(x._km,rt)[0];
+ L.sort(so==='new'?(x,y)=>String(y.first_seen||'').localeCompare(String(x.first_seen||''))||dd(x,y):so==='near'?(x,y)=>(x._km??1e9)-(y._km??1e9)||dd(x,y):so==='cheap'?(x,y)=>cost(x)-cost(y)||dd(x,y):so==='country'?(x,y)=>String(x.country).localeCompare(String(y.country))||dd(x,y):dd);
+ $('shown').textContent=L.length+(L.length===1?' show listed.':' shows listed.');
+ const box=$('list');box.replaceChildren();
+ if(!L.length)box.append(h('p','empty','No shows match. Clear the search, or switch Show to “All listed”.'));
+ let last='';
+ for(const e of L){const m=e._k.slice(0,7);if(so==='date'&&m&&m!==last){last=m;const n=L.filter(x=>x._k.startsWith(m)).length;box.append(h('h2','month',fmt(e._k,{month:'long',year:'numeric'}),h('span',0,n+(n===1?' show':' shows'))))}box.append(row(e,o,rt))}}
+function hero(data){
+ const U=ev.filter(up).sort((x,y)=>x._k.localeCompare(y._k)),n=U[0],f=$('facts');f.replaceChildren();
+ if(!n){$('count').textContent='No dates yet';$('where').textContent='No upcoming shows are listed right now.'}
+ else{const d=Math.round((utc(n._k)-utc(today))/864e5),[v,p]=vp(n);$('count').textContent=d===0?'Today':d===1?'Tomorrow':d+' days';$('where').textContent=`${v}, ${p}. ${fmt(n._k,{weekday:'long',day:'numeric',month:'long'})}.`}
+ const C=new Set(U.map(e=>cn(e.country)).filter(Boolean)),N=ev.filter(isNew).length,last=Date.parse(data.last_seen||'');
+ f.append(h('li',0,`${U.length} upcoming ${U.length===1?'show':'shows'} in ${C.size} ${C.size===1?'country':'countries'}`),h('li',0,N?`${N} newly found this week`:'Nothing new this week'),
+  h('li',0,Number.isFinite(last)?'Checked '+new Date(last).toLocaleString('en-GB',{timeZone:'UTC',dateStyle:'medium',timeStyle:'short'})+' UTC':'Last check unknown'))}
+const save=(k,v)=>{try{localStorage.setItem(k,v)}catch{}},read=k=>{try{return localStorage.getItem(k)||''}catch{return''}};
+for(const o of Object.values(A).sort((x,y)=>x.n.localeCompare(y.n))){const op=h('option',0,`${o.n} (${o.c})`);op.value=o.c;$('from').append(op)}
+const sv=read('bb_origin');$('from').value=A[sv]?sv:'WAW';if(read('bb_trip'))$('trip').value=read('bb_trip');
+for(const id of['from','trip','q','country','show','sort'])$(id).addEventListener('input',()=>{if(id==='from')save('bb_origin',$('from').value);if(id==='trip')save('bb_trip',$('trip').value);render()});
+(async()=>{try{const r=await fetch('./events.json',{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);const data=await r.json();if(!Array.isArray(data.events))throw Error('Missing events');
+ ev=data.events.filter(e=>e&&typeof e==='object');ev.forEach(e=>{e._k=ymd(e.date);e._d=dest(e)});
+ for(const c of[...new Set(ev.map(e=>String(e.country||'').trim()).filter(Boolean))].sort()){const op=h('option',0,c);op.value=c;$('country').append(op)}
+ hero(data);render()}catch(err){console.error(err);$('count').textContent='Offline';$('where').textContent='Could not load concert data. Please try again later.';$('list').replaceChildren(h('p','empty','Could not load concert data.'))}})();
+})();
+</script></body></html>
