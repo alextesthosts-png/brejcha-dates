@@ -17,7 +17,7 @@
     "dccfa39320035708f4c4",
     "f1862e2db218262d3173"
   ],
-  "last_seen": "2026-10-30T05:42:12.850722+00:00",
+  "last_seen": "2026-10-30T06:02:44.464589+00:00",
   "current_events": [
     {
       "date": "2026-10-30T20:00:00",
@@ -38,98 +38,98 @@
       "title": "Boris Brejcha @ MVM Dome",
       "location": "MVM Dome Budapest, Hungary",
       "url": "https://www.bandsintown.com/e/107705403",
-      "ticket_url": "",
+      "ticket_url": "https://mvm-dome.hu/en/events/boris-brejcha",
       "organizer": "Boris Brejcha",
       "city": "Budapest, Hungary",
       "lat": "47.474202",
       "lon": "19.1005233",
       "id": "5dd0a483d6e67641be79",
       "ticket_tracking_url": "https://www.bandsintown.com/t/107705403?affil_code=&app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=700&ticket_id=2015889932&utm_campaign=ticket_tktpp&utm_medium=web&utm_source=widget",
-      "ticket_provider": ""
+      "ticket_provider": "mvm-dome.hu"
     },
     {
       "date": "2026-11-06T21:00:00",
       "title": "Boris Brejcha @ parque de la industria",
       "location": "parque de la industria Ciudad De Guatemala, Guatemala",
       "url": "https://www.bandsintown.com/e/108729208",
-      "ticket_url": "",
+      "ticket_url": "https://www.eticket.gt/masinformacion.aspx?idevento=8711",
       "organizer": "Boris Brejcha",
       "city": "Ciudad De Guatemala, Guatemala",
       "lat": "14.3115163",
       "lon": "-90.7887265",
       "id": "dccfa39320035708f4c4",
       "ticket_tracking_url": "https://www.bandsintown.com/t/108729208?affil_code=&app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=700&ticket_id=2047627887&utm_campaign=ticket_tktpp&utm_medium=web&utm_source=widget",
-      "ticket_provider": ""
+      "ticket_provider": "www.eticket.gt"
     },
     {
       "date": "2026-11-07T19:00:00",
       "title": "Boris Brejcha @ Banorte Stadium",
       "location": "Banorte Stadium Ciudad Universitaria, Mexico",
       "url": "https://www.bandsintown.com/e/108936680",
-      "ticket_url": "",
+      "ticket_url": "https://ultramexico.com/tickets/2026/",
       "organizer": "Boris Brejcha",
       "city": "Ciudad Universitaria, Mexico",
       "lat": "19.32312",
       "lon": "-99.18495",
       "id": "7ee543f809bd0dc4a8ee",
       "ticket_tracking_url": "https://www.bandsintown.com/t/108936680?affil_code=&app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=700&ticket_id=2054059519&utm_campaign=ticket_tktpp&utm_medium=web&utm_source=widget",
-      "ticket_provider": ""
+      "ticket_provider": "ultramexico.com"
     },
     {
       "date": "2026-11-13T21:00:00",
       "title": "Boris Brejcha @ Laroc Club",
       "location": "Laroc Club Valinhos, Brazil",
       "url": "https://www.bandsintown.com/e/108975717",
-      "ticket_url": "",
+      "ticket_url": "https://www.ingresse.com/laroc-apresenta-boris-brejcha/",
       "organizer": "Boris Brejcha",
       "city": "Valinhos, Brazil",
       "lat": "-22.93471",
       "lon": "-46.921264",
       "id": "837a4a9902bc0e6199ba",
       "ticket_tracking_url": "https://www.bandsintown.com/t/108975717?affil_code=&app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=700&ticket_id=2055269666&utm_campaign=ticket_tktpp&utm_medium=web&utm_source=widget",
-      "ticket_provider": ""
+      "ticket_provider": "www.ingresse.com"
     },
     {
       "date": "2026-11-14T13:00:00",
       "title": "Boris Brejcha @ Club Hípico de Santiago",
       "location": "Club Hípico de Santiago Santiago, Chile",
       "url": "https://www.bandsintown.com/e/108982713",
-      "ticket_url": "",
+      "ticket_url": "https://www.puntoticket.com/creamfields-2026?utm_source=ig&utm_medium=social&utm_content=link_in_bio&fbclid=PAdGRleAUreZJleHRuA2FlbQIxMQBwZG9mAmZkaWQWUPeuRzyBdv6U9lU-TgSmxMxbZrxvC3NydGMGYXBwX2lkDzEyNDAyNDU3NDI4NzQxNAABp9_45OUqoVDVOxsskBImPdZmrxbLY3lHWp9fP2o5mDatfq0dAIiug1J4QaPv_aem_imowggi6WyKLO-EOjlQqfw",
       "organizer": "Boris Brejcha",
       "city": "Santiago, Chile",
       "lat": "-33.4599902",
       "lon": "-70.6649822",
       "id": "a769e516f16c7d2f23ab",
       "ticket_tracking_url": "https://www.bandsintown.com/t/108982713?affil_code=&app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=700&ticket_id=2055486542&utm_campaign=ticket_tktpp&utm_medium=web&utm_source=widget",
-      "ticket_provider": ""
+      "ticket_provider": "www.puntoticket.com"
     },
     {
       "date": "2026-11-20T21:00:00",
       "title": "Boris Brejcha @ Eventhotel Pyramide",
       "location": "Eventhotel Pyramide Vösendorf, Austria",
       "url": "https://www.bandsintown.com/e/108680336",
-      "ticket_url": "",
+      "ticket_url": "https://shop.o-klub.at/shop/registrations/8ec09634-0767-4240-9f5c-dae2e659b6e5/events",
       "organizer": "Boris Brejcha",
       "city": "Vösendorf, Austria",
       "lat": "48.11238669999999",
       "lon": "16.3133133",
       "id": "ae81a601249e65d33aa5",
       "ticket_tracking_url": "https://www.bandsintown.com/t/108680336?affil_code=&app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=700&ticket_id=2046112855&utm_campaign=ticket_tktpp&utm_medium=web&utm_source=widget",
-      "ticket_provider": ""
+      "ticket_provider": "shop.o-klub.at"
     },
     {
       "date": "2026-11-27T22:00:00",
       "title": "Boris Brejcha @ Soho Garden Meydan",
       "location": "Soho Garden Meydan Dubai International Financial Centre, United Arab Emirates",
       "url": "https://www.bandsintown.com/e/1040169393",
-      "ticket_url": "",
+      "ticket_url": "https://dubai.platinumlist.net/event-tickets/107926/boris-brejcha-live-at-soho-garden-meydan-dubai?ref=bandsintown&link=https%3A%2F%2Fdubai.platinumlist.net%2Fevent-tickets%2F107926%2Fboris-brejcha-live-at-soho-garden-meydan-dubai&click_id=Efksdu75Rfqjb3ArrDqQow&utm_source=partner&utm_medium=cpa&utm_campaign=bandsintown",
       "organizer": "Boris Brejcha",
       "city": "Dubai International Financial Centre, United Arab Emirates",
       "lat": "25.2106",
       "lon": "55.27787",
       "id": "5dd473eb6cc0ebe64600",
       "ticket_tracking_url": "https://www.bandsintown.com/t/1040169393?affil_code=&app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=700&ticket_id=71624984&utm_campaign=ticket_tktpp&utm_medium=web&utm_source=widget",
-      "ticket_provider": ""
+      "ticket_provider": "dubai.platinumlist.net"
     },
     {
       "date": "2026-12-01T12:00:00",
@@ -150,70 +150,70 @@
       "title": "Boris Brejcha @ Arena Joondalup - Perth",
       "location": "Arena Joondalup - Perth Joondalup, Australia",
       "url": "https://www.bandsintown.com/e/1040352768",
-      "ticket_url": "",
+      "ticket_url": "https://megatix.com.au/white-label/dangerous-goods-xxl-festival-perth-JAN2027?utm_source=bandsintown&utm_content=megatix_70307&utm_medium=bandsintown&ref=bandsintown&click_id=CqXyz6DpSDWoUYeDiIpTkw",
       "organizer": "Boris Brejcha",
       "city": "Joondalup, Australia",
       "lat": "-31.74445",
       "lon": "115.76835",
       "id": "3cf1fe1e488b2214c59a",
       "ticket_tracking_url": "https://www.bandsintown.com/t/1040352768?affil_code=&app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=700&ticket_id=1374512290&utm_campaign=ticket_tktpp&utm_medium=web&utm_source=widget",
-      "ticket_provider": ""
+      "ticket_provider": "megatix.com.au"
     },
     {
       "date": "2027-01-16T14:00:00",
       "title": "Boris Brejcha @ ENGIE Stadium",
       "location": "ENGIE Stadium Sydney Olympic Park, Australia",
       "url": "https://www.bandsintown.com/e/1040352407",
-      "ticket_url": "",
+      "ticket_url": "https://megatix.com.au/white-label/dangerous-goods-xxl-festival-sydney-JAN2027?utm_source=bandsintown&utm_content=megatix_70308&utm_medium=bandsintown&ref=bandsintown&click_id=B9K1F8f7T1uSJgKf0ZqU4A",
       "organizer": "Boris Brejcha",
       "city": "Sydney Olympic Park, Australia",
       "lat": "-33.84306979999999",
       "lon": "151.0676963",
       "id": "44e6b5104fbcf70677ee",
       "ticket_tracking_url": "https://www.bandsintown.com/t/1040352407?affil_code=&app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=700&ticket_id=1374523481&utm_campaign=ticket_tktpp&utm_medium=web&utm_source=widget",
-      "ticket_provider": ""
+      "ticket_provider": "megatix.com.au"
     },
     {
       "date": "2027-01-22T14:00:00",
       "title": "Boris Brejcha @ Eatons Hill Hotel",
       "location": "Eatons Hill Hotel Eatons Hill, Australia",
       "url": "https://www.bandsintown.com/e/1040352328",
-      "ticket_url": "",
+      "ticket_url": "https://megatix.com.au/white-label/dangerous-goods-xxl-festival-brisbane-JAN2027?utm_source=bandsintown&utm_content=megatix_70311&utm_medium=bandsintown&ref=bandsintown&click_id=-jQmmbk-SlanW1Wym0uGQw",
       "organizer": "Boris Brejcha",
       "city": "Eatons Hill, Australia",
       "lat": "-27.3379564",
       "lon": "152.962972",
       "id": "77078b57accb1b61d38a",
       "ticket_tracking_url": "https://www.bandsintown.com/t/1040352328?affil_code=&app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=700&ticket_id=1374525930&utm_campaign=ticket_tktpp&utm_medium=web&utm_source=widget",
-      "ticket_provider": ""
+      "ticket_provider": "megatix.com.au"
     },
     {
       "date": "2027-01-23T12:00:00",
       "title": "Boris Brejcha @ Melbourne Showgrounds",
       "location": "Melbourne Showgrounds Ascot Vale, Australia",
       "url": "https://www.bandsintown.com/e/1040351682",
-      "ticket_url": "",
+      "ticket_url": "https://megatix.com.au/white-label/dangerous-goods-xxl-festival-melbourne-JAN2027?utm_source=bandsintown&utm_content=megatix_70312&utm_medium=bandsintown&ref=bandsintown&click_id=UEOTVRJtQ5K6VuXIeaYmKg",
       "organizer": "Boris Brejcha",
       "city": "Ascot Vale, Australia",
       "lat": "-37.7830351",
       "lon": "144.9099057",
       "id": "8c2eb5753bf33258bc25",
       "ticket_tracking_url": "https://www.bandsintown.com/t/1040351682?affil_code=&app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=700&ticket_id=1374545956&utm_campaign=ticket_tktpp&utm_medium=web&utm_source=widget",
-      "ticket_provider": ""
+      "ticket_provider": "megatix.com.au"
     },
     {
       "date": "2027-02-05T19:30:00",
       "title": "Boris Brejcha @ Igloofest",
       "location": "Igloofest Montréal, Canada",
       "url": "https://www.bandsintown.com/e/109059975",
-      "ticket_url": "",
+      "ticket_url": "https://billets.igloofest.ca/mul/go/320b08d9-c7d7-4075-84c9-88596e77cfc0?fac=IGLOOFEST&locale=en-CA&skin=igloofestmtl",
       "organizer": "Boris Brejcha",
       "city": "Montréal, Canada",
       "lat": "45.5086092",
       "lon": "-73.5521448",
       "id": "7a120a2ebf84c8b86943",
       "ticket_tracking_url": "https://www.bandsintown.com/t/109059975?affil_code=&app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=700&ticket_id=2057881664&utm_campaign=ticket_tktpp&utm_medium=web&utm_source=widget",
-      "ticket_provider": ""
+      "ticket_provider": "billets.igloofest.ca"
     },
     {
       "date": "2027-08-07T14:00:00",
