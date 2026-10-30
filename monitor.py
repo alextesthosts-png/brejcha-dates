@@ -10,6 +10,7 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urljoin, urlparse
+from urllib.parse import urlunparse
 
 import requests
 from bs4 import BeautifulSoup
@@ -69,11 +70,109 @@ def ticket_link(obj):
         return ""
     for offer in offers:
         if isinstance(offer, dict):
-            url = canonical_url(offer.get("url"))
+            url = urljoin(URL, str(offer.get("url") or "")) if offer.get("url") else ""
             if url:
                 return url
     return ""
 
+
+
+# Optional, manually verified event-id -> ticket-provider URL overrides.
+# Example: {"20_character_event_id": "https://provider.example/event"}
+TICKET_OVERRIDES = Path("data/ticket_overrides.json")
+
+
+def safe_ticket_url(raw):
+    """Only allow public HTTPS URLs; never return a Bandsintown tracking link as direct."""
+    try:
+        parsed = urlparse(str(raw or "").strip())
+        host = (parsed.hostname or "").lower()
+        if parsed.scheme != "https" or not host or host == "localhost":
+            return ""
+        if host.endswith(".local") or host.endswith(".internal"):
+            return ""
+        if host in ("bandsintown.com", "www.bandsintown.com") or host.endswith(".bandsintown.com"):
+            return ""
+        # Reject obvious private IP addresses to avoid fetching internal resources.
+        import ipaddress
+        try:
+            ip = ipaddress.ip_address(host)
+            if not ip.is_global:
+                return ""
+        except ValueError:
+            pass
+        if parsed.username or parsed.password:
+            return ""
+        return parsed._replace(fragment="").geturl()
+    except (ValueError, TypeError):
+        return ""
+
+
+def resolve_ticket_url(raw):
+    """Best-effort resolution; never click checkout or submit forms.
+
+    HTTP redirects first, then one short browser navigation for JS redirects.
+    Any failure falls back to an empty direct URL (event details remain intact).
+    """
+    raw = str(raw or "").strip()
+    if not raw.startswith("https://"):
+        return ""
+    host = (urlparse(raw).hostname or "").lower()
+    if not (host == "bandsintown.com" or host.endswith(".bandsintown.com")):
+        return safe_ticket_url(raw)
+    try:
+        response = requests.get(raw, timeout=9, allow_redirects=True,
+                                headers={"User-Agent": "Mozilla/5.0"}, stream=True)
+        dest = safe_ticket_url(response.url)
+        response.close()
+        if dest:
+            return dest
+    except requests.RequestException:
+        pass
+    try:
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(headless=True)
+            context = browser.new_context()
+            page = context.new_page()
+            try:
+                page.goto(raw, wait_until="domcontentloaded", timeout=12000)
+                page.wait_for_timeout(1800)
+                return safe_ticket_url(page.url)
+            finally:
+                browser.close()
+    except Exception as exc:
+        print(f"Ticket redirect could not be resolved: {type(exc).__name__}")
+        return ""
+
+
+def enrich_tickets(events):
+    """Enrich only event records, without changing event IDs or alert logic."""
+    overrides = {}
+    if TICKET_OVERRIDES.exists():
+        try:
+            overrides = json.loads(TICKET_OVERRIDES.read_text(encoding="utf-8"))
+            if not isinstance(overrides, dict):
+                overrides = {}
+        except (ValueError, OSError):
+            print("Warning: invalid ticket overrides JSON; ignoring it")
+    for event in events:
+        manual = safe_ticket_url(overrides.get(event["id"], ""))
+        if not manual:
+            for rule, destination in overrides.items():
+                if "|" not in rule:
+                    continue
+                date, city = rule.split("|", 1)
+                if event.get("date", "").startswith(date) and city.casefold() in (event.get("location", "") + " " + event.get("title", "")).casefold():
+                    manual = safe_ticket_url(destination)
+                    break
+        candidate = event.get("ticket_url", "")
+        # Do not visit a generic Bandsintown event-details page; it is not a ticket CTA.
+        event["ticket_url"] = manual or resolve_ticket_url(candidate)
+        if event["ticket_url"]:
+            event["ticket_provider"] = urlparse(event["ticket_url"]).hostname or ""
+        else:
+            event["ticket_provider"] = ""
+    return events
 
 def extract_jsonld(soup):
     events = []
@@ -214,7 +313,7 @@ def extract_dom(soup):
                 "title": title,
                 "location": location,
                 "url": url,
-                "ticket_url": "",
+                "ticket_url": next((urljoin(URL, a.get("href")) for a in el.select("a[href]") if re.search(r"ticket|buy|karten", a.get_text(" ", strip=True), re.I)), ""),
                 "organizer": "",
             })
 
@@ -410,6 +509,13 @@ def main():
         if STATE.exists()
         else None
     )
+    # Reuse previously resolved URLs to avoid repeated external requests each scan.
+    old_events = {e.get("id"): e for e in (previous or {}).get("current_events", []) if isinstance(e, dict)}
+    for event in events:
+        old = old_events.get(event["id"], {})
+        if not event.get("ticket_url") and old.get("ticket_url"):
+            event["ticket_url"] = old["ticket_url"]
+    enrich_tickets(events)
     current = {event["id"] for event in events}
 
     if previous is None:
