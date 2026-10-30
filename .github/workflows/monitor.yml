@@ -1,4 +1,3 @@
-
 name: Monitor concerts
 
 on:
@@ -9,6 +8,11 @@ on:
     inputs:
       test_discord:
         description: 'Send a basic Discord webhook test'
+        type: boolean
+        default: false
+
+      test_telegram:
+        description: 'Send a fictional concert to Telegram only'
         type: boolean
         default: false
 
@@ -30,6 +34,12 @@ jobs:
     timeout-minutes: 12
 
     steps:
+      - name: Reject conflicting test selections
+        if: ${{ (inputs.test_discord == true && inputs.test_concert == true) || (inputs.test_discord == true && inputs.test_telegram == true) || (inputs.test_concert == true && inputs.test_telegram == true) }}
+        run: |
+          echo "ERROR: Select only one test option."
+          exit 1
+
       - name: Check out repository
         uses: actions/checkout@v5
         with:
@@ -46,11 +56,11 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Install Playwright browser
-        if: ${{ inputs.test_discord != true && inputs.test_concert != true }}
+        if: ${{ inputs.test_discord != true && inputs.test_concert != true && inputs.test_telegram != true }}
         run: python -m playwright install --with-deps chromium
 
       - name: Send basic Discord test notification
-        if: ${{ inputs.test_discord == true && inputs.test_concert != true }}
+        if: ${{ inputs.test_discord == true && inputs.test_concert != true && inputs.test_telegram != true }}
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
@@ -94,7 +104,7 @@ jobs:
           PY
 
       - name: Send sample concert notification
-        if: ${{ inputs.test_concert == true && inputs.test_discord != true }}
+        if: ${{ inputs.test_concert == true && inputs.test_discord != true && inputs.test_telegram != true }}
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
@@ -125,14 +135,51 @@ jobs:
           print("Saved concert data was not modified.")
           PY
 
+      - name: Send sample Telegram notification
+        if: ${{ inputs.test_telegram == true && inputs.test_discord != true && inputs.test_concert != true }}
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          python - <<'PY'
+          import os
+          from monitor import send_telegram
+
+          sample_event = {
+              "date": "2099-05-15",
+              "title": (
+                  "[TEST ONLY] Boris Brejcha - "
+                  "Sample Concert (not a real event)"
+              ),
+              "location": (
+                  "Example Arena, Berlin, Germany "
+                  "(fictional)"
+              ),
+              "url": "https://www.borisbrejcha.de/dates",
+          }
+
+          print("Sending fictional Telegram concert notification...")
+
+          send_telegram(
+              sample_event,
+              os.environ["TELEGRAM_BOT_TOKEN"],
+              os.environ["TELEGRAM_CHAT_ID"],
+          )
+
+          print("Sample Telegram notification sent successfully!")
+          print("Saved concert data was not modified.")
+          PY
+
       - name: Check concert dates
-        if: ${{ inputs.test_discord != true && inputs.test_concert != true }}
+        if: ${{ inputs.test_discord != true && inputs.test_concert != true && inputs.test_telegram != true }}
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python monitor.py
 
       - name: Upload HTML for troubleshooting on failure
-        if: ${{ failure() && inputs.test_discord != true && inputs.test_concert != true }}
+        if: ${{ failure() && inputs.test_discord != true && inputs.test_concert != true && inputs.test_telegram != true }}
         uses: actions/upload-artifact@v4
         with:
           name: debug-html
@@ -141,7 +188,7 @@ jobs:
           retention-days: 3
 
       - name: Persist event state
-        if: ${{ always() && inputs.test_discord != true && inputs.test_concert != true }}
+        if: ${{ always() && inputs.test_discord != true && inputs.test_concert != true && inputs.test_telegram != true }}
         run: |
           if [ -f data/events.json ]; then
             git config user.name 'github-actions[bot]'
@@ -154,9 +201,3 @@ jobs:
               git push
             fi
           fi
-
-      - name: Reject conflicting test selections
-        if: ${{ inputs.test_discord == true && inputs.test_concert == true }}
-        run: |
-          echo "ERROR: Select only one test option."
-          exit 1
