@@ -17,13 +17,15 @@
     "dccfa39320035708f4c4",
     "f1862e2db218262d3173"
   ],
-  "last_seen": "2026-10-30T03:15:49.681540+00:00",
+  "last_seen": "2026-10-30T03:56:32.084738+00:00",
   "current_events": [
     {
       "date": "2026-10-30T20:00:00",
       "title": "Boris Brejcha @ BERNEXPO",
       "location": "BERNEXPO Bern, Switzerland",
       "url": "https://www.bandsintown.com/e/108622222",
+      "ticket_url": "https://www.bandsintown.com/t/108622222",
+      "organizer": "Boris Brejcha",
       "id": "37b26d1c91e0bbd5165d"
     },
     {
@@ -31,6 +33,8 @@
       "title": "Boris Brejcha @ MVM Dome",
       "location": "MVM Dome Budapest, Hungary",
       "url": "https://www.bandsintown.com/e/107705403",
+      "ticket_url": "https://www.bandsintown.com/t/107705403",
+      "organizer": "Boris Brejcha",
       "id": "5dd0a483d6e67641be79"
     },
     {
@@ -38,6 +42,8 @@
       "title": "Boris Brejcha @ parque de la industria",
       "location": "parque de la industria Ciudad De Guatemala, Guatemala",
       "url": "https://www.bandsintown.com/e/108729208",
+      "ticket_url": "https://www.bandsintown.com/t/108729208",
+      "organizer": "Boris Brejcha",
       "id": "dccfa39320035708f4c4"
     },
     {
@@ -45,6 +51,8 @@
       "title": "Boris Brejcha @ Banorte Stadium",
       "location": "Banorte Stadium Ciudad Universitaria, Mexico",
       "url": "https://www.bandsintown.com/e/108936680",
+      "ticket_url": "https://www.bandsintown.com/t/108936680",
+      "organizer": "Boris Brejcha",
       "id": "7ee543f809bd0dc4a8ee"
     },
     {
@@ -52,6 +60,8 @@
       "title": "Boris Brejcha @ Laroc Club",
       "location": "Laroc Club Valinhos, Brazil",
       "url": "https://www.bandsintown.com/e/108975717",
+      "ticket_url": "https://www.bandsintown.com/t/108975717",
+      "organizer": "Boris Brejcha",
       "id": "837a4a9902bc0e6199ba"
     },
     {
@@ -59,6 +69,8 @@
       "title": "Boris Brejcha @ Club Hípico de Santiago",
       "location": "Club Hípico de Santiago Santiago, Chile",
       "url": "https://www.bandsintown.com/e/108982713",
+      "ticket_url": "https://www.bandsintown.com/t/108982713",
+      "organizer": "Boris Brejcha",
       "id": "a769e516f16c7d2f23ab"
     },
     {
@@ -66,6 +78,8 @@
       "title": "Boris Brejcha @ Eventhotel Pyramide",
       "location": "Eventhotel Pyramide Vösendorf, Austria",
       "url": "https://www.bandsintown.com/e/108680336",
+      "ticket_url": "https://www.bandsintown.com/t/108680336",
+      "organizer": "Boris Brejcha",
       "id": "ae81a601249e65d33aa5"
     },
     {
@@ -73,6 +87,8 @@
       "title": "Boris Brejcha @ Soho Garden Meydan",
       "location": "Soho Garden Meydan Dubai International Financial Centre, United Arab Emirates",
       "url": "https://www.bandsintown.com/e/1040169393",
+      "ticket_url": "https://www.bandsintown.com/t/1040169393",
+      "organizer": "Boris Brejcha",
       "id": "5dd473eb6cc0ebe64600"
     },
     {
@@ -80,6 +96,8 @@
       "title": "Boris Brejcha @ TBC, Lisboa",
       "location": "TBC, Lisboa Lisbon, Portugal",
       "url": "https://www.bandsintown.com/e/1040487951",
+      "ticket_url": "https://www.bandsintown.com/t/1040487951",
+      "organizer": "Boris Brejcha",
       "id": "9be3790399a626bd3e62"
     },
     {
@@ -87,6 +105,8 @@
       "title": "Boris Brejcha @ Arena Joondalup - Perth",
       "location": "Arena Joondalup - Perth Joondalup, Australia",
       "url": "https://www.bandsintown.com/e/1040352768",
+      "ticket_url": "https://www.bandsintown.com/t/1040352768",
+      "organizer": "Boris Brejcha",
       "id": "3cf1fe1e488b2214c59a"
     },
     {
@@ -94,6 +114,8 @@
       "title": "Boris Brejcha @ ENGIE Stadium",
       "location": "ENGIE Stadium Sydney Olympic Park, Australia",
       "url": "https://www.bandsintown.com/e/1040352407",
+      "ticket_url": "https://www.bandsintown.com/t/1040352407",
+      "organizer": "Boris Brejcha",
       "id": "44e6b5104fbcf70677ee"
     },
     {
@@ -101,6 +123,8 @@
       "title": "Boris Brejcha @ Eatons Hill Hotel",
       "location": "Eatons Hill Hotel Eatons Hill, Australia",
       "url": "https://www.bandsintown.com/e/1040352328",
+      "ticket_url": "https://www.bandsintown.com/t/1040352328",
+      "organizer": "Boris Brejcha",
       "id": "77078b57accb1b61d38a"
     },
     {
@@ -108,6 +132,8 @@
       "title": "Boris Brejcha @ Melbourne Showgrounds",
       "location": "Melbourne Showgrounds Ascot Vale, Australia",
       "url": "https://www.bandsintown.com/e/1040351682",
+      "ticket_url": "https://www.bandsintown.com/t/1040351682",
+      "organizer": "Boris Brejcha",
       "id": "8c2eb5753bf33258bc25"
     },
     {
@@ -115,6 +141,8 @@
       "title": "Boris Brejcha @ Igloofest",
       "location": "Igloofest Montréal, Canada",
       "url": "https://www.bandsintown.com/e/109059975",
+      "ticket_url": "https://www.bandsintown.com/t/109059975",
+      "organizer": "Boris Brejcha",
       "id": "7a120a2ebf84c8b86943"
     },
     {
@@ -122,8 +150,11 @@
       "title": "Boris Brejcha @ Theaterplatz Dresden",
       "location": "Theaterplatz Dresden Dresden, Germany",
       "url": "https://www.bandsintown.com/e/109048807",
+      "ticket_url": "https://www.bandsintown.com/t/109048807",
+      "organizer": "Boris Brejcha",
       "id": "aca77504f70da76807bd"
     }
   ],
-  "pending_notifications": {}
+  "pending_notifications": {},
+  "first_seen": {}
 }
