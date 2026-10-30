@@ -28,13 +28,42 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Check out repository
+      - name: Check out latest default branch
         uses: actions/checkout@v4
-      - name: Prepare dashboard data
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+      - name: Prepare public dashboard data
         run: |
-          test -f data/events.json
-          mkdir -p docs
-          cp data/events.json docs/events.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          source = json.loads(Path('data/events.json').read_text(encoding='utf-8'))
+          first_seen = source.get('first_seen', {})
+          if not isinstance(first_seen, dict):
+              first_seen = {}
+          output = []
+          for event in source.get('current_events', []):
+              if not isinstance(event, dict):
+                  continue
+              location = str(event.get('location') or '')
+              # Country only when source contains a clear trailing country component.
+              country = location.rsplit(',', 1)[-1].strip() if ',' in location else ''
+              output.append({
+                  'id': event.get('id', ''),
+                  'date': event.get('date', ''),
+                  'title': event.get('title', ''),
+                  'location': location,
+                  'country': country,
+                  'url': event.get('url', ''),
+                  'ticket_url': event.get('ticket_url', ''),
+                  'organizer': event.get('organizer', ''),
+                  'first_seen': first_seen.get(event.get('id')),
+              })
+          public = {'last_seen': source.get('last_seen'), 'events': output}
+          Path('docs').mkdir(exist_ok=True)
+          Path('docs/events.json').write_text(json.dumps(public, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          print(f'Prepared {len(output)} public events without notification state')
+          PY
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
       - name: Upload Pages artifact
