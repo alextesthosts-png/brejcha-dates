@@ -1,6 +1,6 @@
 # Boris Brejcha Concert Monitor
 
-A Python and GitHub Actions monitor for newly published concerts on [Boris Brejcha's official dates page](https://www.borisbrejcha.de/dates). It uses a headless browser to extract events, remembers previously seen concerts, and sends notifications to **Discord and Telegram** for newly detected events.
+A Python and GitHub Actions monitor for newly published concerts on [Boris Brejcha's official dates page](https://www.borisbrejcha.de/dates). It uses a headless browser to extract events, remembers previously seen concerts, and sends notifications to **Discord and Telegram** for newly detected events. This is a personal project built with the assistance of AI tools.
 
 ## Setup
 
