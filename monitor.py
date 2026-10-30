@@ -1,4 +1,3 @@
-
 """Monitor Boris Brejcha tour dates; notify only about newly discovered events."""
 
 import hashlib
@@ -292,13 +291,73 @@ def send_discord(event, webhook):
         return
 
 
-def save_state(known, events):
+def send_telegram(event, bot_token, chat_id):
+    """Send one concert notification through the Telegram Bot API."""
+
+    message = (
+        "🎧 New Boris Brejcha concert detected!\n"
+        f"📅 Date: {event['date']}\n"
+        f"🎵 Event: {event['title'][:180]}\n"
+        f"📍 Location: {event['location'][:180] or 'See event page'}\n"
+        f"🔗 {event['url'] or URL}"
+    )
+
+    for attempt in range(3):
+        try:
+            response = requests.post(
+                f"https://api.telegram.org/bot{bot_token}/sendMessage",
+                json={
+                    "chat_id": chat_id,
+                    "text": message,
+                    "disable_notification": False,
+                    "disable_web_page_preview": True,
+                },
+                timeout=30,
+            )
+        except requests.RequestException:
+            # Do not expose the token-bearing request URL in logs.
+            raise RuntimeError(
+                "Telegram request failed (network or timeout)."
+            ) from None
+
+        if response.status_code == 429 and attempt < 2:
+            try:
+                delay = float(
+                    response.json()
+                    .get("parameters", {})
+                    .get("retry_after", 2)
+                )
+            except (ValueError, TypeError, AttributeError):
+                delay = 2
+
+            time.sleep(max(0, min(delay, 60)))
+            continue
+
+        try:
+            accepted = response.json().get("ok") is True
+        except (ValueError, TypeError, AttributeError):
+            accepted = False
+
+        if not response.ok or not accepted:
+            raise RuntimeError(
+                "Telegram rejected notification "
+                f"(HTTP {response.status_code})."
+            )
+
+        print("Telegram notification delivered successfully.")
+        return
+
+
+def save_state(known, events, pending=None):
+    """Save historical IDs and any incomplete notification deliveries."""
+
     STATE.parent.mkdir(parents=True, exist_ok=True)
 
     data = {
         "known_ids": sorted(known),
         "last_seen": datetime.now(timezone.utc).isoformat(),
         "current_events": events,
+        "pending_notifications": pending or {},
     }
 
     STATE.write_text(
@@ -309,10 +368,18 @@ def save_state(known, events):
 
 def main():
     webhook = os.getenv("DISCORD_WEBHOOK_URL")
+    bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
+    chat_id = os.getenv("TELEGRAM_CHAT_ID")
 
     if not webhook:
         raise RuntimeError(
             "Missing DISCORD_WEBHOOK_URL GitHub Actions secret"
+        )
+
+    if not bot_token or not chat_id:
+        raise RuntimeError(
+            "Missing TELEGRAM_BOT_TOKEN or "
+            "TELEGRAM_CHAT_ID GitHub Actions secret"
         )
 
     html = fetch_html()
@@ -327,18 +394,10 @@ def main():
             "State preserved. Inspect debug HTML."
         )
 
-    STATE.parent.mkdir(parents=True, exist_ok=True)
-
     previous = (
         json.loads(STATE.read_text(encoding="utf-8"))
         if STATE.exists()
         else None
-    )
-
-    known = (
-        set(previous.get("known_ids", []))
-        if previous
-        else set()
     )
 
     current = {event["id"] for event in events}
@@ -348,27 +407,65 @@ def main():
             f"Initial baseline: {len(events)} concerts recorded, "
             "no notifications sent."
         )
-        known = current
+        save_state(current, events)
+        return
 
-    else:
-        new_events = [
-            event for event in events
-            if event["id"] not in known
-        ]
+    known = set(previous.get("known_ids", []))
+    pending = previous.get("pending_notifications", {})
 
-        print(
-            f"{len(events)} currently found; "
-            f"{len(new_events)} new."
+    if not isinstance(pending, dict):
+        raise RuntimeError(
+            "Invalid pending_notifications in state file."
         )
 
-        for event in new_events:
+    new_events = [
+        event for event in events
+        if event["id"] not in known
+    ]
+
+    print(
+        f"{len(events)} currently found; "
+        f"{len(new_events)} not yet fully notified."
+    )
+
+    # Keep pending alerts even if the event temporarily
+    # disappears from the website.
+    for event in new_events:
+        pending.setdefault(
+            event["id"],
+            {
+                "event": event,
+                "delivered": [],
+            },
+        )
+
+    # Save the notification queue before sending.
+    save_state(known, events, pending)
+
+    for event_id in list(pending):
+        item = pending[event_id]
+        event = item["event"]
+        delivered = set(item.get("delivered", []))
+
+        if "discord" not in delivered:
             send_discord(event, webhook)
-            known.add(event["id"])
+            delivered.add("discord")
+            item["delivered"] = sorted(delivered)
+            save_state(known, events, pending)
 
-            # Save after each successful notification.
-            save_state(known, events)
+        if "telegram" not in delivered:
+            send_telegram(event, bot_token, chat_id)
+            delivered.add("telegram")
+            item["delivered"] = sorted(delivered)
+            save_state(known, events, pending)
 
-    save_state(known | current, events)
+        # Only mark the event fully processed once
+        # both notification channels have succeeded.
+        known.add(event_id)
+        del pending[event_id]
+        save_state(known, events, pending)
+
+    save_state(known, events, pending)
 
 
 if __name__ == "__main__":
