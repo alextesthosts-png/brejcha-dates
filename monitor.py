@@ -742,10 +742,10 @@ def send_discord(event, webhook):
 def send_telegram(event, bot_token, chat_id):
     """Send a concert notification using the Telegram Bot API."""
     message = (
-        "🎧 New Boris Brejcha concert detected!\\n"
-        f"📅 Date: {event['date']}\\n"
-        f"🎵 Event: {event['title'][:180]}\\n"
-        f"📍 Location: {event['location'][:180] or 'See event page'}\\n"
+        "🎧 New Boris Brejcha concert detected!\n"
+        f"📅 Date: {event['date']}\n"
+        f"🎵 Event: {event['title'][:180]}\n"
+        f"📍 Location: {event['location'][:180] or 'See event page'}\n"
         f"🔗 {event['url'] or URL}"
     )
     # Telegram's Bot API returns HTTP 200 with {"ok": false} in some errors.
