@@ -18,7 +18,7 @@
     "dccfa39320035708f4c4",
     "f1862e2db218262d3173"
   ],
-  "last_seen": "2026-10-31T12:57:52.032609+00:00",
+  "last_seen": "2026-10-31T15:44:30.337027+00:00",
   "current_events": [
     {
       "date": "2026-10-31T18:00:00",
@@ -143,7 +143,7 @@
       "lat": "13.1741517",
       "lon": "77.59613949999999",
       "id": "0cfa8ffb014486470d88",
-      "ticket_tracking_url": "https://www.bandsintown.com/t/109103732?affil_code=&app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=700&ticket_id=2059238131&utm_campaign=ticket_tktpp&utm_medium=web&utm_source=widget",
+      "ticket_tracking_url": "https://www.bandsintown.com/t/109103732?app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=209",
       "ticket_provider": "thumpn.com"
     },
     {
