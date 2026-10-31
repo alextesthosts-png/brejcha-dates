@@ -1,5 +1,6 @@
 {
   "known_ids": [
+    "0cfa8ffb014486470d88",
     "37b26d1c91e0bbd5165d",
     "3cf1fe1e488b2214c59a",
     "44e6b5104fbcf70677ee",
@@ -17,7 +18,7 @@
     "dccfa39320035708f4c4",
     "f1862e2db218262d3173"
   ],
-  "last_seen": "2026-10-31T09:50:38.991397+00:00",
+  "last_seen": "2026-10-31T12:57:52.032609+00:00",
   "current_events": [
     {
       "date": "2026-10-31T18:00:00",
@@ -132,6 +133,20 @@
       "ticket_provider": ""
     },
     {
+      "date": "2026-12-18T14:00:00",
+      "title": "Boris Brejcha @ District Arena @ Terraform",
+      "location": "District Arena @ Terraform Bengaluru, India",
+      "url": "https://www.bandsintown.com/e/109103732",
+      "ticket_url": "https://thumpn.com/event/WZ2U98/circus-bengaluru-2026?utm_source=bandsintown&utm_medium=partner_feed&utm_campaign=circus-bengaluru-2026",
+      "organizer": "Boris Brejcha",
+      "city": "Bengaluru, India",
+      "lat": "13.1741517",
+      "lon": "77.59613949999999",
+      "id": "0cfa8ffb014486470d88",
+      "ticket_tracking_url": "https://www.bandsintown.com/t/109103732?affil_code=&app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=700&ticket_id=2059238131&utm_campaign=ticket_tktpp&utm_medium=web&utm_source=widget",
+      "ticket_provider": "thumpn.com"
+    },
+    {
       "date": "2027-01-15T16:00:00",
       "title": "Boris Brejcha @ Arena Joondalup - Perth",
       "location": "Arena Joondalup - Perth Joondalup, Australia",
@@ -217,5 +232,7 @@
     }
   ],
   "pending_notifications": {},
-  "first_seen": {}
+  "first_seen": {
+    "0cfa8ffb014486470d88": "2026-10-31T12:57:50.798477+00:00"
+  }
 }
