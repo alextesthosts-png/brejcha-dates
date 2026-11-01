@@ -18,22 +18,8 @@
     "dccfa39320035708f4c4",
     "f1862e2db218262d3173"
   ],
-  "last_seen": "2026-10-31T21:44:53.282957+00:00",
+  "last_seen": "2026-11-01T01:18:07.807229+00:00",
   "current_events": [
-    {
-      "date": "2026-10-31T18:00:00",
-      "title": "Boris Brejcha @ MVM Dome",
-      "location": "MVM Dome Budapest, Hungary",
-      "url": "https://www.bandsintown.com/e/107705403",
-      "ticket_url": "https://mvm-dome.hu/en/events/boris-brejcha",
-      "organizer": "Boris Brejcha",
-      "city": "Budapest, Hungary",
-      "lat": "47.474202",
-      "lon": "19.1005233",
-      "id": "5dd0a483d6e67641be79",
-      "ticket_tracking_url": "https://www.bandsintown.com/t/107705403?app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=209",
-      "ticket_provider": "mvm-dome.hu"
-    },
     {
       "date": "2026-11-06T21:00:00",
       "title": "Boris Brejcha @ parque de la industria",
