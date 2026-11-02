@@ -19,7 +19,7 @@
     "dccfa39320035708f4c4",
     "f1862e2db218262d3173"
   ],
-  "last_seen": "2026-11-02T13:19:16.340314+00:00",
+  "last_seen": "2026-11-02T16:10:24.125980+00:00",
   "current_events": [
     {
       "date": "2026-11-06T21:00:00",
@@ -116,7 +116,7 @@
       "lat": "52.32294839999999",
       "lon": "9.804915",
       "id": "15d33b3534d28dfe9540",
-      "ticket_tracking_url": "https://www.bandsintown.com/t/109107965?affil_code=&app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=700&ticket_id=2059369354&utm_campaign=ticket_tktpp&utm_medium=web&utm_source=widget",
+      "ticket_tracking_url": "https://www.bandsintown.com/t/109107965?app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=209",
       "ticket_provider": "www.digistore24.com"
     },
     {
