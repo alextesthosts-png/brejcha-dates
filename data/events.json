@@ -18,7 +18,7 @@
     "dccfa39320035708f4c4",
     "f1862e2db218262d3173"
   ],
-  "last_seen": "2026-11-02T04:04:52.227392+00:00",
+  "last_seen": "2026-11-02T07:36:36.447774+00:00",
   "current_events": [
     {
       "date": "2026-11-06T21:00:00",
@@ -109,14 +109,14 @@
       "title": "Boris Brejcha @ TBC, Lisboa",
       "location": "TBC, Lisboa Lisbon, Portugal",
       "url": "https://www.bandsintown.com/e/1040487951",
-      "ticket_url": "",
+      "ticket_url": "https://dice.fm/event/dkmb96-boris-brejcha-lisbon-2026-new-date-venue-1st-dec-tbc-lisboa-lisbon-tickets?click_id=Yr8_czS6TR6cwiq-Yy1qwQ&pid=530cb286&_branch_match_id=1645705507859871126&utm_medium=partners_api&_branch_referrer=H4sIAAAAAAAAAwXBOw6DMAwA0NuwQYCWNKoUdeAE%2FSxMEbENWPwNUlQGzs573b4v21Opgac%2BQQZKmlGVjxrNvQA0PnvBwNA7RluJcXB89e%2BjIfAaV%2F9sDe9oYbTFLQWfGx2dQg2J8NQ6L3PYSGzZyTzSBQgiY1VoAAAA",
       "organizer": "Boris Brejcha",
       "city": "Lisbon, Portugal",
       "lat": "38.71667",
       "lon": "-9.13333",
       "id": "9be3790399a626bd3e62",
       "ticket_tracking_url": "https://www.bandsintown.com/t/1040487951?app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=209",
-      "ticket_provider": ""
+      "ticket_provider": "dice.fm"
     },
     {
       "date": "2026-12-18T14:00:00",
