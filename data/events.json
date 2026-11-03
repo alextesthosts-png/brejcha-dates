@@ -8,6 +8,7 @@
     "5dd0a483d6e67641be79",
     "5dd473eb6cc0ebe64600",
     "77078b57accb1b61d38a",
+    "7712e8cbdb00848a28bf",
     "7a120a2ebf84c8b86943",
     "7ee543f809bd0dc4a8ee",
     "837a4a9902bc0e6199ba",
@@ -20,7 +21,7 @@
     "dccfa39320035708f4c4",
     "f1862e2db218262d3173"
   ],
-  "last_seen": "2026-11-03T19:03:08.821162+00:00",
+  "last_seen": "2026-11-03T21:56:32.800484+00:00",
   "current_events": [
     {
       "date": "2026-11-06T21:00:00",
@@ -229,8 +230,22 @@
       "lat": "55.672442",
       "lon": "12.621380999999928",
       "id": "97f5ee6db895a1eef28e",
-      "ticket_tracking_url": "https://www.bandsintown.com/t/109113667?affil_code=&app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=700&ticket_id=2059546116&utm_campaign=ticket_tktpp&utm_medium=web&utm_source=widget",
+      "ticket_tracking_url": "https://www.bandsintown.com/t/109113667?app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=209",
       "ticket_provider": "gravitycph.dk"
+    },
+    {
+      "date": "2027-06-11T19:00:00",
+      "title": "Boris Brejcha @ Marshall Józef Piłsudski's Municipal Stadium of Legia Warsaw",
+      "location": "Marshall Józef Piłsudski's Municipal Stadium of Legia Warsaw Warszawa, Poland",
+      "url": "https://www.bandsintown.com/e/109113510",
+      "ticket_url": "",
+      "organizer": "Boris Brejcha",
+      "city": "Warszawa, Poland",
+      "lat": "52.2204287",
+      "lon": "21.0414388",
+      "id": "7712e8cbdb00848a28bf",
+      "ticket_tracking_url": "https://www.bandsintown.com/t/109113510?affil_code=&app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=700&ticket_id=2059541249&utm_campaign=ticket_tktpp&utm_medium=web&utm_source=widget",
+      "ticket_provider": ""
     },
     {
       "date": "2027-08-07T14:00:00",
@@ -251,6 +266,7 @@
   "first_seen": {
     "0cfa8ffb014486470d88": "2026-10-31T12:57:50.798477+00:00",
     "15d33b3534d28dfe9540": "2026-11-02T13:19:15.556206+00:00",
-    "97f5ee6db895a1eef28e": "2026-11-03T19:03:07.348349+00:00"
+    "97f5ee6db895a1eef28e": "2026-11-03T19:03:07.348349+00:00",
+    "7712e8cbdb00848a28bf": "2026-11-03T21:56:32.162582+00:00"
   }
 }
