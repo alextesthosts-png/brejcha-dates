@@ -21,7 +21,7 @@
     "dccfa39320035708f4c4",
     "f1862e2db218262d3173"
   ],
-  "last_seen": "2026-11-03T21:56:32.800484+00:00",
+  "last_seen": "2026-11-04T01:16:04.813925+00:00",
   "current_events": [
     {
       "date": "2026-11-06T21:00:00",
@@ -238,14 +238,14 @@
       "title": "Boris Brejcha @ Marshall Józef Piłsudski's Municipal Stadium of Legia Warsaw",
       "location": "Marshall Józef Piłsudski's Municipal Stadium of Legia Warsaw Warszawa, Poland",
       "url": "https://www.bandsintown.com/e/109113510",
-      "ticket_url": "",
+      "ticket_url": "https://www.warsawmusicfestival.com/pre-registration",
       "organizer": "Boris Brejcha",
       "city": "Warszawa, Poland",
       "lat": "52.2204287",
       "lon": "21.0414388",
       "id": "7712e8cbdb00848a28bf",
       "ticket_tracking_url": "https://www.bandsintown.com/t/109113510?affil_code=&app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=700&ticket_id=2059541249&utm_campaign=ticket_tktpp&utm_medium=web&utm_source=widget",
-      "ticket_provider": ""
+      "ticket_provider": "www.warsawmusicfestival.com"
     },
     {
       "date": "2027-08-07T14:00:00",
