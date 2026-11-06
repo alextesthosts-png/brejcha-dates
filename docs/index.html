@@ -936,6 +936,25 @@ const a=(href,c,txt)=>{const n=h('a',c,txt);n.href=href;n.target='_blank';n.rel=
 const money=n=>'€'+Math.round(n).toLocaleString('en-GB');
 const budget=()=>{const val=id=>Math.max(0,Number($(id).value)||0);return val('budgetTicket')+val('budgetHotel')*val('budgetNights')+val('budgetOther')};
 const maps=e=>'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent([e.location,e.country].filter(Boolean).join(', '));
+function omioLink(origin, destination, eventDate, roundTrip) {
+  const city = airport =>
+    airport.n
+      .replace(/\s*\([^)]*\)/g, '')
+      .replace(/\s+(Airport|International|Chopin|Brandenburg|Schiphol|Heathrow).*$/i, '')
+      .trim();
+
+  const url = new URL('https://www.omio.com/');
+
+  url.searchParams.set('departurePosTerm', city(origin));
+  url.searchParams.set('arrivalPosTerm', city(destination));
+  url.searchParams.set('departureDate', shift(eventDate, -1));
+
+  if (roundTrip) {
+    url.searchParams.set('returnDate', shift(eventDate, 1));
+  }
+
+  return url.toString();
+}
 const weatherCache=new Map();
 const weatherDesc=c=>({0:'Clear sky',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',45:'Fog',48:'Rime fog',51:'Light drizzle',53:'Drizzle',55:'Heavy drizzle',61:'Light rain',63:'Rain',65:'Heavy rain',71:'Light snow',73:'Snow',75:'Heavy snow',80:'Rain showers',81:'Rain showers',82:'Heavy showers',95:'Thunderstorms'})[c]||'Variable conditions';
 
@@ -995,7 +1014,7 @@ function row(e,o,rt){
    h('p','fare',near?'Nearby / Ground travel':`€${lo}–${hi}`),
    h('p','budgettotal',near?money(extra)+' + ground transit':`${money(extra+lo)}–${money(extra+hi)} Total Est.`),
    h('p','sub',near?`${km} km from ${o.n}. High-speed rail optimal.`:`Estimated ${rt?'round-trip':'one-way'} flight (${km.toLocaleString('en-GB')} km from ${o.c})`),
-   h('div','acts',!near&&a(fl,'btn p','Live Fares ↗'),eu(o)&&eu(d)&&km<1500&&a('https://int.bahn.de/en','btn ghost','Compare Trains ↗'))
+   h('div','acts',!near&&a(fl,'btn p','Live Fares ↗'),eu(o)&&eu(d)&&km<1500&&a(omioLink(o,d,k,rt),'btn ghost','Compare Transport ↗'))
   );
  }
  return h('article','stub',when,info,trip);
