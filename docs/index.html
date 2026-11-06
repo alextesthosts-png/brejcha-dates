@@ -936,24 +936,60 @@ const a=(href,c,txt)=>{const n=h('a',c,txt);n.href=href;n.target='_blank';n.rel=
 const money=n=>'€'+Math.round(n).toLocaleString('en-GB');
 const budget=()=>{const val=id=>Math.max(0,Number($(id).value)||0);return val('budgetTicket')+val('budgetHotel')*val('budgetNights')+val('budgetOther')};
 const maps=e=>'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent([e.location,e.country].filter(Boolean).join(', '));
-function omioLink(origin, destination, eventDate, roundTrip) {
-  const city = airport =>
-    airport.n
-      .replace(/\s*\([^)]*\)/g, '')
-      .replace(/\s+(Airport|International|Chopin|Brandenburg|Schiphol|Heathrow).*$/i, '')
-      .trim();
-
-  const url = new URL('https://www.omio.com/');
-
-  url.searchParams.set('departurePosTerm', city(origin));
-  url.searchParams.set('arrivalPosTerm', city(destination));
-  url.searchParams.set('departureDate', shift(eventDate, -1));
-
-  if (roundTrip) {
-    url.searchParams.set('returnDate', shift(eventDate, 1));
-  }
-
-  return url.toString();
+// Trainline needs its own station IDs, not airport codes or plain city names.
+// Resolve IDs when the visitor clicks; if the request is blocked, open a route page instead.
+const trainlineCities={WAW:'Warsaw',WMI:'Warsaw',KRK:'Krakow',GDN:'Gdansk',WRO:'Wroclaw',BER:'Berlin',DRS:'Dresden',FRA:'Frankfurt',MUC:'Munich',HAM:'Hamburg',DUS:'Dusseldorf',PRG:'Prague',VIE:'Vienna',GRZ:'Graz',BUD:'Budapest',ZRH:'Zurich',GVA:'Geneva',BSL:'Basel',AMS:'Amsterdam',BRU:'Brussels',CDG:'Paris',LHR:'London',MAN:'Manchester',DUB:'Dublin',MAD:'Madrid',BCN:'Barcelona',IBZ:'Ibiza',LIS:'Lisbon',FCO:'Rome',MXP:'Milan',ATH:'Athens',CPH:'Copenhagen',ARN:'Stockholm',OSL:'Oslo',HEL:'Helsinki',OTP:'Bucharest',BEG:'Belgrade'};
+const trainlineStationCache=new Map();
+async function trainlineStation(city){
+ if(trainlineStationCache.has(city))return trainlineStationCache.get(city);
+ const task=(async()=>{
+  const endpoint='https://www.thetrainline.com/api/locations-search/v2/search?searchTerm='+encodeURIComponent(city)+'&locale=en-US';
+  const response=await fetch(endpoint,{signal:AbortSignal.timeout(7000)});
+  if(!response.ok)throw Error('Trainline location lookup HTTP '+response.status);
+  const data=await response.json();
+  const locations=Array.isArray(data.searchLocations)?data.searchLocations:[];
+  const match=locations.find(x=>norm(x.name)===norm(city)&&x.locationType==='stationGroup')||locations.find(x=>norm(x.name)===norm(city));
+  if(!match||!/^urn:trainline:generic:loc:/.test(match.code||''))throw Error('No Trainline station for '+city);
+  return match.code;
+ })();
+ trainlineStationCache.set(city,task);
+ try{return await task}catch(err){trainlineStationCache.delete(city);throw err}
+}
+function trainlineRoutePage(from,to){
+ const slug=s=>norm(s).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+ return 'https://www.thetrainline.com/train-times/'+slug(from)+'-to-'+slug(to);
+}
+async function trainlineLink(origin,destination,date,roundTrip){
+ const from=trainlineCities[origin.c],to=trainlineCities[destination.c];
+ if(!from||!to)return 'https://www.thetrainline.com/';
+ const fallback=trainlineRoutePage(from,to);
+ try{
+  const [start,end]=await Promise.all([trainlineStation(from),trainlineStation(to)]);
+  const u=new URL('https://www.thetrainline.com/book/results');
+  u.searchParams.set('journeySearchType',roundTrip?'return':'single');
+  u.searchParams.set('origin',start);
+  u.searchParams.set('destination',end);
+  u.searchParams.set('outwardDate',shift(date,-1)+'T09:00:00');
+  u.searchParams.set('outwardDateType','departAfter');
+  if(roundTrip){u.searchParams.set('inwardDate',shift(date,1)+'T12:00:00');u.searchParams.set('inwardDateType','departAfter')}
+  u.searchParams.set('selectedTab','train');
+  u.searchParams.set('lang','en');
+  return u.href;
+ }catch(err){console.warn('Trainline prefilled search unavailable; opening route page:',err);return fallback}
+}
+function trainlineButton(origin,destination,date,roundTrip){
+ const button=h('a','btn ghost','Compare Trains ↗');
+ button.href='https://www.thetrainline.com/';
+ button.target='_blank';button.rel='noopener noreferrer';
+ button.addEventListener('click',event=>{
+  event.preventDefault();
+  // Open the tab immediately to avoid popup blockers while station IDs are resolved.
+  const tab=window.open('about:blank','_blank');
+  if(!tab){window.location.href='https://www.thetrainline.com/';return}
+  tab.opener=null;
+  trainlineLink(origin,destination,date,roundTrip).then(link=>{tab.location.replace(link)}).catch(()=>{tab.location.replace('https://www.thetrainline.com/')});
+ });
+ return button;
 }
 const weatherCache=new Map();
 const weatherDesc=c=>({0:'Clear sky',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',45:'Fog',48:'Rime fog',51:'Light drizzle',53:'Drizzle',55:'Heavy drizzle',61:'Light rain',63:'Rain',65:'Heavy rain',71:'Light snow',73:'Snow',75:'Heavy snow',80:'Rain showers',81:'Rain showers',82:'Heavy showers',95:'Thunderstorms'})[c]||'Variable conditions';
@@ -1014,7 +1050,7 @@ function row(e,o,rt){
    h('p','fare',near?'Nearby / Ground travel':`€${lo}–${hi}`),
    h('p','budgettotal',near?money(extra)+' + ground transit':`${money(extra+lo)}–${money(extra+hi)} Total Est.`),
    h('p','sub',near?`${km} km from ${o.n}. High-speed rail optimal.`:`Estimated ${rt?'round-trip':'one-way'} flight (${km.toLocaleString('en-GB')} km from ${o.c})`),
-   h('div','acts',!near&&a(fl,'btn p','Live Fares ↗'),eu(o)&&eu(d)&&km<1500&&a(omioLink(o,d,k,rt),'btn ghost','Compare Transport ↗'))
+   h('div','acts',!near&&a(fl,'btn p','Live Fares ↗'),eu(o)&&eu(d)&&km<1500&&trainlineButton(o,d,k,rt))
   );
  }
  return h('article','stub',when,info,trip);
