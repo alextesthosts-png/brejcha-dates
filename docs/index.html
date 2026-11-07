@@ -731,6 +731,11 @@ footer {
 .layouts a:hover{color:var(--neon-cyan);border-color:var(--border-cyan)}
 .layouts a[aria-current="page"]{color:var(--neon-cyan);border-color:var(--border-cyan);background:rgba(0,242,254,.08)}
 @media (max-width:768px){.top{flex-wrap:wrap}}
+.switchers{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.langs{display:flex;gap:4px;font-family:var(--font-mono);font-size:.72rem}
+.langs button{font:inherit;color:rgba(226,232,240,.65);background:transparent;border:1px solid var(--border-dim);border-radius:6px;padding:6px 10px;cursor:pointer;letter-spacing:.06em}
+.langs button:hover{color:var(--neon-cyan);border-color:var(--border-cyan)}
+.langs button[aria-pressed="true"]{color:var(--neon-cyan);border-color:var(--border-cyan);background:rgba(0,242,254,.08)}
 </style>
 </head>
 <body>
@@ -744,7 +749,7 @@ footer {
         <span class="brand-sub">BSMR // FCKNG SERIOUS</span>
       </div>
     </div>
-    <nav class="layouts" aria-label="Choose layout"><span>Layout</span><a href="index.html" aria-current="page">Futuristic</a><a href="classic.html">Classic</a></nav>
+    <div class="switchers"><nav class="layouts" aria-label="Choose layout"><span>Layout</span><a href="index.html" aria-current="page">Futuristic</a><a href="classic.html">Classic</a></nav><div class="langs" role="group" aria-label="Language"><button type="button" data-lang="en">EN</button><button type="button" data-lang="pl">PL</button></div></div>
     <div class="header-actions">
       <div class="sys-status">
         <span class="sys-dot"></span>
@@ -849,13 +854,44 @@ footer {
   <!-- HUD Footer -->
   <footer>
     <div>Unofficial fan initiative & architectural exploration, not affiliated with Boris Brejcha or Fckng Serious. Dates, times, ticket links and availability can change. Verify with official event sources before booking travel. Weather uses nearby airport coordinates; flight costs are not live fares.</div>
-    <div style="color: var(--neon-cyan)">Source code: <a href="https://github.com/alextesthosts-png/brejcha-dates" target="_blank" rel="noopener noreferrer">github.com/alextesthosts-png/brejcha-dates</a></div>
+    <div style="color: var(--neon-cyan)">Github repo: https://github.com/alextesthosts-png/brejcha-dates</div>
   </footer>
 </div>
 
 <script>
 (()=>{'use strict';
 const $=id=>document.getElementById(id);
+const LOC={en:'en-GB',pl:'pl-PL'};
+const PL={"Layout": "Układ", "Futuristic": "Futurystyczny", "Classic": "Klasyczny", "Choose layout": "Wybierz układ", "Language": "Język", "Filters and travel": "Filtry i podróż", "Trip budget calculator": "Kalkulator kosztów podróży", "Round trip": "W obie strony", "One way": "W jedną stronę", "All countries": "Wszystkie kraje", "New this week": "Nowe w tym tygodniu", "All listed": "Wszystkie na liście", "Newly announced": "Ostatnio ogłoszone", "Country": "Kraj", "0 nights": "0 nocy", "1 night": "1 noc", "2 nights": "2 noce", "3 nights": "3 noce", "4 nights": "4 noce", "5 nights": "5 nocy", "Loading…": "Ładowanie…", "Loading concert data…": "Ładowanie danych koncertowych…", "Check local forecast": "Sprawdź prognozę pogody", "Location not listed": "Brak lokalizacji", "Forecast unavailable: destination not mapped.": "Prognoza niedostępna: kierunek nie został przypisany.", "Forecast available only within about 16 days of the concert.": "Prognoza jest dostępna tylko na około 16 dni przed koncertem.", "Forecast not available for this date yet.": "Prognoza na tę datę nie jest jeszcze dostępna.", "Precip": "Opady", "near": "w pobliżu", "from": "od", "to": "do", "in": "w", "across": "w", "Scheduled on": "Termin:", "Set ": "Godz. ", "Past Mission": "Zakończony", "Past": "Zakończony", "OFFLINE": "OFFLINE", "Clear sky": "Bezchmurnie", "Mainly clear": "Przeważnie bezchmurnie", "Partly cloudy": "Częściowe zachmurzenie", "Overcast": "Pochmurno", "Fog": "Mgła", "Rime fog": "Mgła szronowa", "Light drizzle": "Lekka mżawka", "Drizzle": "Mżawka", "Heavy drizzle": "Silna mżawka", "Light rain": "Lekki deszcz", "Rain": "Deszcz", "Heavy rain": "Silny deszcz", "Light snow": "Lekki śnieg", "Snow": "Śnieg", "Heavy snow": "Silny śnieg", "Rain showers": "Przelotne opady deszczu", "Heavy showers": "Silne przelotne opady", "Thunderstorms": "Burze", "Variable conditions": "Zmienna pogoda", "UNOFFICIAL TOUR TRACKER": "NIEOFICJALNY TRACKER TRASY", "Official Tour Dates ↗": "Oficjalne daty trasy ↗", "Concert Monitor": "Monitor koncertów", "▶ Next Upcoming Performance": "▶ Najbliższy występ", "Loading verified concert data…": "Ładowanie potwierdzonych danych koncertowych…", "HUD // TELEMETRY": "HUD // TELEMETRIA", "// DEPARTURE HUB": "// LOTNISKO WYLOTU", "// ITINERARY": "// RODZAJ PODRÓŻY", "// EXPLORE CITY": "// SZUKAJ MIASTA", "Type city, club or festival..": "Wpisz miasto, klub lub festiwal..", "// TERRITORY": "// KRAJ", "// TIMELINE": "// OŚ CZASU", "Upcoming shows": "Nadchodzące koncerty", "// SEQUENCE": "// SORTOWANIE", "Earliest date": "Najwcześniejsza data", "Nearest hub": "Najbliższe lotnisko", "Lowest fare": "Najniższa cena lotu", "// TRIP BUDGET CALCULATOR & EXPENSE MATRIX": "// KALKULATOR BUDŻETU PODRÓŻY I MATRYCA WYDATKÓW", "// SIMULATE CUSTOM TICKET, LODGING & ANCILLARY EXPENSES ACROSS ALL DESTINATIONS": "// SYMULUJ WŁASNE KOSZTY BILETU, NOCLEGU I DODATKÓW DLA WSZYSTKICH KIERUNKÓW", "// TICKET ESTIMATE (€)": "// SZACOWANA CENA BILETU (€)", "// HOTEL PER NIGHT (€)": "// HOTEL ZA NOC (€)", "// NIGHTS DURATION": "// LICZBA NOCY", "// ANCILLARY COSTS (€)": "// DODATKOWE KOSZTY (€)", "// PER-PERSON METRICS IN EUR. SCENARIO CALCULATION ONLY; COMBINES ROUGH DISTANCE-BASED FLIGHT ESTIMATES AND YOUR OWN EXPENSES; NO LIVE PRICES.": "// WARTOŚCI NA OSOBĘ W EUR. TYLKO SCENARIUSZ; ŁĄCZY ORIENTACYJNE SZACUNKI LOTÓW WEDŁUG ODLEGŁOŚCI Z TWOIMI WYDATKAMI; BEZ CEN NA ŻYWO.", "// FLIGHT ESTIMATES ARE DISTANCE-BASED, NOT LIVE FARES. USE LIVE FARES TO CHECK ACTUAL PRICES.": "// SZACUNKI LOTÓW OPIERAJĄ SIĘ NA ODLEGŁOŚCI, TO NIE CENY NA ŻYWO. UŻYJ „CENY NA ŻYWO”, ABY SPRAWDZIĆ RZECZYWISTE CENY.", "INITIALIZING SATELLITE TELEMETRY…": "INICJALIZACJA TELEMETRII SATELITARNEJ…", "Unofficial fan initiative & architectural exploration, not affiliated with Boris Brejcha or Fckng Serious. Dates, times, ticket links and availability can change. Verify with official event sources before booking travel. Weather uses nearby airport coordinates; flight costs are not live fares.": "Nieoficjalna inicjatywa fanów i eksperyment architektoniczny, niezwiązana z Borisem Brejchą ani Fckng Serious. Daty, godziny, linki do biletów i dostępność mogą się zmieniać. Przed rezerwacją podróży sprawdź oficjalne źródła wydarzenia. Pogoda korzysta ze współrzędnych pobliskiego lotniska; koszty lotów to nie ceny na żywo.", "Github repo: https://github.com/alextesthosts-png/brejcha-dates": "Repozytorium GitHub: https://github.com/alextesthosts-png/brejcha-dates", "Scanning atmospheric telemetry…": "Skanowanie telemetrii atmosferycznej…", "Atmospheric sensor offline; retry later.": "Czujnik atmosferyczny offline; spróbuj ponownie później.", "✦ NEW ANNOUNCEMENT": "✦ NOWE OGŁOSZENIE", "Host: ": "Gospodarz: ", "Ticket destination: ": "Bilety w serwisie: ", "Ticket tracking link via Bandsintown": "Link do biletów przez Bandsintown", "Direct ticket link not available": "Brak bezpośredniego linku do biletów", "View on Google Maps ↗": "Zobacz w Mapach Google ↗", "Buy Tickets ↗": "Kup bilety ↗", "Ticket Link ↗": "Link do biletów ↗", "Mission Details": "Szczegóły", "☁ Local weather telemetry available within 16 days of event.": "☁ Telemetria pogody dostępna na 16 dni przed wydarzeniem.", "☁ Weather telemetry unavailable: destination coordinates unmapped.": "☁ Telemetria pogody niedostępna: brak współrzędnych kierunku.", "This show has already concluded.": "Ten koncert już się odbył.", " + transit": " + transport", "Uncharted airspace. Coordinates not yet mapped.": "Nieznana przestrzeń powietrzna. Współrzędne nie są jeszcze przypisane.", "Select origin departure hub.": "Wybierz lotnisko wylotu.", "Trip budget excludes transport until an airport is mapped.": "Budżet nie obejmuje transportu, dopóki lotnisko nie zostanie przypisane.", "Nearby / Ground travel": "Blisko / dojazd lądowy", " + ground transit": " + dojazd lądowy", "Total Est.": "razem (szac.)", "High-speed rail optimal.": "Najlepiej koleją dużych prędkości.", "Estimated round-trip flight": "Szacowany lot w obie strony", "Estimated one-way flight": "Szacowany lot w jedną stronę", "Live Fares ↗": "Ceny na żywo ↗", "Compare Trains ↗": "Porównaj pociągi ↗", "NO RADAR SIGNALS MATCH CRITERIA. ADJUST SEARCH FILTERS.": "BRAK SYGNAŁÓW SPEŁNIAJĄCYCH KRYTERIA. ZMIEŃ FILTRY WYSZUKIWANIA.", "NO SIGNALS": "BRAK SYGNAŁÓW", "No upcoming shows currently detected on radar.": "Radar nie wykrył obecnie nadchodzących koncertów.", "TODAY": "DZISIAJ", "TOMORROW": "JUTRO", "DAYS": "DNI", "Radar matrix up to date": "Matryca radaru jest aktualna", "Monitor last checked ": "Ostatnia kontrola monitora: ", "Monitor check time unavailable": "Czas ostatniej kontroli niedostępny", "Could not load the published concert list. Please retry after the next dashboard deployment.": "Nie udało się wczytać opublikowanej listy koncertów. Spróbuj ponownie po następnej publikacji panelu.", "Concert data unavailable — no sample events displayed": "Dane koncertowe niedostępne — nie wyświetlono przykładowych wydarzeń", "Data unavailable": "Dane niedostępne", "Could not load events.json. Check the deployed dashboard data and refresh. If opening this HTML as a local file, use GitHub Pages or a local web server.": "Nie udało się wczytać events.json. Sprawdź wdrożone dane panelu i odśwież stronę. Jeśli otwierasz ten plik HTML lokalnie, użyj GitHub Pages lub lokalnego serwera WWW.", "Boris Brejcha — Futuristic Tour HUD": "Boris Brejcha — futurystyczny HUD trasy", "Trip": "Podróż", "Search": "Szukaj", "Upcoming": "Nadchodzące", "Date": "Data", "Nights": "Noce", "total": "razem", "days": "dni"},CT={"Poland": "Polska", "Germany": "Niemcy", "Czechia": "Czechy", "Austria": "Austria", "Hungary": "Węgry", "Switzerland": "Szwajcaria", "Netherlands": "Holandia", "Belgium": "Belgia", "France": "Francja", "United Kingdom": "Wielka Brytania", "Ireland": "Irlandia", "Spain": "Hiszpania", "Portugal": "Portugalia", "Italy": "Włochy", "Greece": "Grecja", "Turkey": "Turcja", "Denmark": "Dania", "Sweden": "Szwecja", "Norway": "Norwegia", "Finland": "Finlandia", "Romania": "Rumunia", "Serbia": "Serbia", "United States": "Stany Zjednoczone", "Canada": "Kanada", "Mexico": "Meksyk", "Guatemala": "Gwatemala", "Colombia": "Kolumbia", "Peru": "Peru", "Chile": "Chile", "Argentina": "Argentyna", "Brazil": "Brazylia", "United Arab Emirates": "Zjednoczone Emiraty Arabskie", "Israel": "Izrael", "Japan": "Japonia", "Singapore": "Singapur", "Thailand": "Tajlandia", "Australia": "Australia", "South Africa": "RPA"},TITLE=document.title;
+let LANG=(()=>{try{const q=new URLSearchParams(location.search).get('lang');if(q==='pl'||q==='en')return q;const s=localStorage.getItem('bb_lang');if(s==='pl'||s==='en')return s}catch{}return(navigator.language||'').toLowerCase().startsWith('pl')?'pl':'en'})();
+const t=s=>LANG==='pl'&&PL[s]||s;
+const cl=c=>LANG==='pl'&&CT[c]||c;
+const plu=(n,en,p)=>LANG==='pl'?(n===1?p[0]:(n%10>=2&&n%10<=4&&(n%100<10||n%100>=20))?p[1]:p[2]):(n===1?en[0]:en[1]);
+let lastData=null;
+function applyStatic(){
+ document.documentElement.lang=LANG;document.title=t(TITLE);
+ const w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT),ns=[];while(w.nextNode())ns.push(w.currentNode);
+ for(const n of ns){
+  if(/^(SCRIPT|STYLE)$/.test(n.parentElement.tagName))continue;
+  if(n._en===undefined){const k=n.nodeValue.replace(/\s+/g,' ').trim();n._en=k&&PL[k]?k:null}
+  if(n._en)n.nodeValue=n.nodeValue.replace(/\S(?:[\s\S]*\S)?/,()=>t(n._en));
+ }
+ for(const el of document.querySelectorAll('[placeholder],[aria-label]'))for(const at of['placeholder','aria-label']){
+  if(!el.hasAttribute(at))continue;const k='_en_'+at;if(el[k]===undefined)el[k]=PL[el.getAttribute(at)]?el.getAttribute(at):null;
+  if(el[k])el.setAttribute(at,t(el[k]))}
+}
+function fillCountries(){
+ const sel=$('country'),cur=sel.value;[...sel.options].slice(1).forEach(o=>o.remove());
+ const cs=[...new Set(ev.map(e=>String(e.country||'').trim()).filter(Boolean))].sort((x,y)=>cl(x).localeCompare(cl(y),LOC[LANG]));
+ for(const c of cs){const op=document.createElement('option');op.value=c;op.textContent=cl(c);sel.append(op)}
+ sel.value=cur}
+function setLang(l,save){LANG=l;if(save){try{localStorage.setItem('bb_lang',l)}catch{}}
+ for(const b of document.querySelectorAll('.langs button'))b.setAttribute('aria-pressed',String(b.dataset.lang===l));
+ for(const x of document.querySelectorAll('.layouts a'))x.href=x.getAttribute('href').split('?')[0]+'?lang='+l;
+ applyStatic();
+ if(lastData){fillCountries();hero(lastData);render()}}
+function initLang(){for(const b of document.querySelectorAll('.langs button'))b.addEventListener('click',()=>setLang(b.dataset.lang,true));setLang(LANG,false)}
+
 const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 const AL={usa:'united states',us:'united states',uk:'united kingdom',uae:'united arab emirates','czech republic':'czechia'};
 const cn=s=>{s=norm(s).trim();return AL[s]||s};
@@ -929,7 +965,7 @@ const ymd=r=>{const m=String(r||'').match(/^\d{4}-\d\d-\d\d/);return m?m[0]:''};
 const utc=s=>{const[y,m,d]=s.split('-').map(Number);return Date.UTC(y,m-1,d)};
 const t0=new Date(),today=`${t0.getFullYear()}-${pad(t0.getMonth()+1)}-${pad(t0.getDate())}`;
 const shift=(s,n)=>new Date(utc(s)+n*864e5).toISOString().slice(0,10);
-const fmt=(s,o)=>new Intl.DateTimeFormat('en-GB',{...o,timeZone:'UTC'}).format(utc(s));
+const fmt=(s,o)=>new Intl.DateTimeFormat(LOC[LANG],{...o,timeZone:'UTC'}).format(utc(s));
 const up=e=>e._k>=today;
 const isNew=e=>{const t=Date.parse(e.first_seen||'');return Number.isFinite(t)&&t<=Date.now()&&Date.now()-t<6048e5};
 const url=r=>{try{const u=new URL(r);return/^https?:$/.test(u.protocol)?u.href:''}catch{return''}};
@@ -939,7 +975,7 @@ const eu=p=>p.la>35&&p.la<71&&p.lo>-11&&p.lo<32;
 function fare(km,rt){let lo,hi;if(km<=4000){lo=40+.05*km;hi=80+.12*km}else{lo=200+.06*km;hi=350+.14*km}if(!rt){lo*=.55;hi*=.55}const r=x=>x>250?Math.round(x/10)*10:Math.round(x/5)*5;return[r(lo),r(hi)]}
 const h=(t,c,...k)=>{const n=document.createElement(t);if(c)n.className=c;for(const x of k.flat())if(x!=null&&x!==false&&x!=='')n.append(x);return n};
 const a=(href,c,txt)=>{const n=h('a',c,txt);n.href=href;n.target='_blank';n.rel='noopener noreferrer';return n};
-const money=n=>'€'+Math.round(n).toLocaleString('en-GB');
+const money=n=>'€'+Math.round(n).toLocaleString(LOC[LANG]);
 const budget=()=>{const val=id=>Math.max(0,Number($(id).value)||0);return val('budgetTicket')+val('budgetHotel')*val('budgetNights')+val('budgetOther')};
 const maps=e=>'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent([e.location,e.country].filter(Boolean).join(', '));
 // Trainline needs its own station IDs, not airport codes or plain city names.
@@ -984,7 +1020,7 @@ async function trainlineLink(origin,destination,date,roundTrip){
  }catch(err){console.warn('Trainline prefilled search unavailable; opening route page:',err);return fallback}
 }
 function trainlineButton(origin,destination,date,roundTrip){
- const button=h('a','btn ghost','Compare Trains ↗');
+ const button=h('a','btn ghost',t('Compare Trains ↗'));
  button.href='https://www.thetrainline.com/';
  button.target='_blank';button.rel='noopener noreferrer';
  button.addEventListener('click',event=>{
@@ -998,14 +1034,14 @@ function trainlineButton(origin,destination,date,roundTrip){
  return button;
 }
 const weatherCache=new Map();
-const weatherDesc=c=>({0:'Clear sky',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',45:'Fog',48:'Rime fog',51:'Light drizzle',53:'Drizzle',55:'Heavy drizzle',61:'Light rain',63:'Rain',65:'Heavy rain',71:'Light snow',73:'Snow',75:'Heavy snow',80:'Rain showers',81:'Rain showers',82:'Heavy showers',95:'Thunderstorms'})[c]||'Variable conditions';
+const weatherDesc=c=>({0:t('Clear sky'),1:t('Mainly clear'),2:t('Partly cloudy'),3:t('Overcast'),45:t('Fog'),48:t('Rime fog'),51:t('Light drizzle'),53:t('Drizzle'),55:t('Heavy drizzle'),61:t('Light rain'),63:t('Rain'),65:t('Heavy rain'),71:t('Light snow'),73:t('Snow'),75:t('Heavy snow'),80:t('Rain showers'),81:t('Rain showers'),82:t('Heavy showers'),95:t('Thunderstorms')})[c]||t('Variable conditions');
 
 async function loadWeather(e,target){
  const d=e._d,k=e._k;
- if(!d||!k){target.textContent='Forecast unavailable: destination not mapped.';return}
+ if(!d||!k){target.textContent=t('Forecast unavailable: destination not mapped.');return}
  const days=Math.round((utc(k)-utc(today))/864e5);
- if(days<0||days>15){target.textContent='Forecast available only within about 16 days of the concert.';return}
- target.textContent='Scanning atmospheric telemetry…';
+ if(days<0||days>15){target.textContent=t('Forecast available only within about 16 days of the concert.');return}
+ target.textContent=t('Scanning atmospheric telemetry…');
  try{
   const key=d.c+':'+k;
   if(!weatherCache.has(key)){
@@ -1015,48 +1051,48 @@ async function loadWeather(e,target){
    const data=await response.json();weatherCache.set(key,data);
   }
   const data=weatherCache.get(key),idx=data.daily?.time?.indexOf(k)??-1;
-  if(idx<0){target.textContent='Forecast not available for this date yet.';return}
+  if(idx<0){target.textContent=t('Forecast not available for this date yet.');return}
   const v=data.daily,low=v.temperature_2m_min[idx],high=v.temperature_2m_max[idx],rain=v.precipitation_probability_max[idx];
-  target.textContent=`☁ ${weatherDesc(v.weather_code[idx])} · ${Math.round(low)}–${Math.round(high)}°C · Precip ${rain}% (near ${d.n})`;
- }catch(err){console.warn('Weather request failed',err);target.textContent='Atmospheric sensor offline; retry later.';}
+  target.textContent=`☁ ${weatherDesc(v.weather_code[idx])} · ${Math.round(low)}–${Math.round(high)}°C · ${t('Precip')} ${rain}% (${t('near')} ${d.n})`;
+ }catch(err){console.warn('Weather request failed',err);target.textContent=t('Atmospheric sensor offline; retry later.');}
 }
 
-function vp(e){const v=(e.title||'').replace(/^boris brejcha\s*@\s*/i,'').trim()||'Boris Brejcha';let p=(e.location||'').trim();if(p.toLowerCase().startsWith(v.toLowerCase()))p=p.slice(v.length).replace(/^[\s,;-]+/,'');return[v,p||e.country||'Location not listed']}
+function vp(e){const v=(e.title||'').replace(/^boris brejcha\s*@\s*/i,'').trim()||'Boris Brejcha';let p=(e.location||'').trim();if(p.toLowerCase().startsWith(v.toLowerCase()))p=p.slice(v.length).replace(/^[\s,;-]+/,'');return[v,p||e.country||t('Location not listed')]}
 
 function row(e,o,rt){
  const[venue,place]=vp(e),tk=url(e.ticket_url),via=url(e.ticket_tracking_url),det=url(e.url),tm=(String(e.date).match(/T(\d\d:\d\d)/)||[])[1],k=e._k;
  const when=h('div','when',h('span','dow',k&&fmt(k,{weekday:'short'})),h('b','day',k?String(+k.slice(8)):'?'),h('span','mon',k&&fmt(k,{month:'short'})));
- const tags=h('p','tags',isNew(e)&&h('span','tag new','✦ NEW ANNOUNCEMENT'),!up(e)&&h('span','tag','Past Mission'),tm&&tm!=='00:00'&&h('span','tag','Set '+tm),e.organizer&&!/^boris brejcha$/i.test(e.organizer)&&h('span','tag','Host: '+e.organizer));
- const buy=tk||via,host=tk?'Ticket destination: '+(e.ticket_provider||new URL(tk).hostname):via?'Ticket tracking link via Bandsintown':'Direct ticket link not available';
- const info=h('div','info',h('h3',0,venue),h('p','place',place,' · ',a(maps(e),'','View on Google Maps ↗')),tags,h('div','acts',buy&&a(buy,'btn p',tk?'Buy Tickets ↗':'Ticket Link ↗'),det&&a(det,'btn ghost','Mission Details')),h('p','host',host));
+ const tags=h('p','tags',isNew(e)&&h('span','tag new',t('✦ NEW ANNOUNCEMENT')),!up(e)&&h('span','tag',t('Past Mission')),tm&&tm!=='00:00'&&h('span','tag',t('Set ')+tm),e.organizer&&!/^boris brejcha$/i.test(e.organizer)&&h('span','tag',t('Host: ')+e.organizer));
+ const buy=tk||via,host=tk?t('Ticket destination: ')+(e.ticket_provider||new URL(tk).hostname):via?t('Ticket tracking link via Bandsintown'):t('Direct ticket link not available');
+ const info=h('div','info',h('h3',0,venue),h('p','place',place,' · ',a(maps(e),'',t('View on Google Maps ↗'))),tags,h('div','acts',buy&&a(buy,'btn p',tk?t('Buy Tickets ↗'):t('Ticket Link ↗')),det&&a(det,'btn ghost',t('Mission Details'))),h('p','host',host));
  
  const weather=h('p','weatherline');
  if(up(e)&&e._d){
    const days=Math.round((utc(k)-utc(today))/864e5);
    if(days<=15){
-     const b=h('button',0,'Check local forecast');
+     const b=h('button',0,t('Check local forecast'));
      b.type='button';
      b.addEventListener('click',()=>loadWeather(e,weather));
      weather.append('☁ ',b);
    } else {
-     weather.textContent='☁ Local weather telemetry available within 16 days of event.';
+     weather.textContent=t('☁ Local weather telemetry available within 16 days of event.');
    }
  } else if(up(e)) {
-   weather.textContent='☁ Weather telemetry unavailable: destination coordinates unmapped.';
+   weather.textContent=t('☁ Weather telemetry unavailable: destination coordinates unmapped.');
  }
  info.append(weather);
 
  const d=e._d;let trip;const extra=budget();
- if(!up(e))trip=h('div','trip',h('p','sub','This show has already concluded.'));
- else if(!o||!d)trip=h('div','trip',h('p','budgettotal',money(extra)+' + transit'),h('p','sub',o?'Uncharted airspace. Coordinates not yet mapped.':'Select origin departure hub.'),h('p','sub','Trip budget excludes transport until an airport is mapped.'));
+ if(!up(e))trip=h('div','trip',h('p','sub',t('This show has already concluded.')));
+ else if(!o||!d)trip=h('div','trip',h('p','budgettotal',money(extra)+t(' + transit')),h('p','sub',o?t('Uncharted airspace. Coordinates not yet mapped.'):t('Select origin departure hub.')),h('p','sub',t('Trip budget excludes transport until an airport is mapped.')));
  else{
   const km=Math.round(hav(o,d)),near=km<250,[lo,hi]=fare(km,rt);
   const fl='https://www.google.com/travel/flights?q='+encodeURIComponent(`Flights from ${o.c} to ${d.c} on ${shift(k,-1)}`+(rt?` through ${shift(k,1)}`:' one way'));
   trip=h('div','trip',
-   h('p','fare',near?'Nearby / Ground travel':`€${lo}–${hi}`),
-   h('p','budgettotal',near?money(extra)+' + ground transit':`${money(extra+lo)}–${money(extra+hi)} Total Est.`),
-   h('p','sub',near?`${km} km from ${o.n}. High-speed rail optimal.`:`Estimated ${rt?'round-trip':'one-way'} flight (${km.toLocaleString('en-GB')} km from ${o.c})`),
-   h('div','acts',!near&&a(fl,'btn p','Live Fares ↗'),eu(o)&&eu(d)&&km<1500&&trainlineButton(o,d,k,rt))
+   h('p','fare',near?t('Nearby / Ground travel'):`€${lo}–${hi}`),
+   h('p','budgettotal',near?money(extra)+t(' + ground transit'):`${money(extra+lo)}–${money(extra+hi)} ${t('Total Est.')}`),
+   h('p','sub',near?`${km} km ${t('from')} ${o.n}. ${t('High-speed rail optimal.')}`:`${rt?t('Estimated round-trip flight'):t('Estimated one-way flight')} (${km.toLocaleString(LOC[LANG])} km ${t('from')} ${o.c})`),
+   h('div','acts',!near&&a(fl,'btn p',t('Live Fares ↗')),eu(o)&&eu(d)&&km<1500&&trainlineButton(o,d,k,rt))
   );
  }
  return h('article','stub',when,info,trip);
@@ -1064,30 +1100,30 @@ function row(e,o,rt){
 
 let ev=[];
 function render(){
- const o=A[$('from').value],rt=$('trip').value==='round',q=norm($('q').value),c=$('country').value,s=$('show').value,so=$('sort').value;
+ const o=A[$(t('from')).value],rt=$('trip').value==='round',q=norm($('q').value),c=$('country').value,s=$('show').value,so=$('sort').value;
  const L=ev.filter(e=>(s==='all'||up(e))&&(s!=='new'||isNew(e))&&(!c||e.country===c)&&norm([e.title,e.location,e.country,e.organizer].join(' ')).includes(q));
  L.forEach(e=>{e._km=o&&e._d?Math.round(hav(o,e._d)):null});
  const dd=(x,y)=>x._k.localeCompare(y._k),cost=x=>x._km==null?1e9:fare(x._km,rt)[0];
- L.sort(so==='new'?(x,y)=>String(y.first_seen||'').localeCompare(String(x.first_seen||''))||dd(x,y):so==='near'?(x,y)=>(x._km??1e9)-(y._km??1e9)||dd(x,y):so==='cheap'?(x,y)=>cost(x)-cost(y)||dd(x,y):so==='country'?(x,y)=>String(x.country).localeCompare(String(y.country))||dd(x,y):dd);
- $('shown').textContent=L.length+(L.length===1?' show listed':' shows listed');
+ L.sort(so==='new'?(x,y)=>String(y.first_seen||'').localeCompare(String(x.first_seen||''))||dd(x,y):so===t('near')?(x,y)=>(x._km??1e9)-(y._km??1e9)||dd(x,y):so==='cheap'?(x,y)=>cost(x)-cost(y)||dd(x,y):so==='country'?(x,y)=>String(x.country).localeCompare(String(y.country))||dd(x,y):dd);
+ $('shown').textContent=L.length+' '+plu(L.length,['show listed','shows listed'],['koncert na liście','koncerty na liście','koncertów na liście']);
  const box=$('list');box.replaceChildren();
- if(!L.length)box.append(h('p','empty','NO RADAR SIGNALS MATCH CRITERIA. ADJUST SEARCH FILTERS.'));
+ if(!L.length)box.append(h('p','empty',t('NO RADAR SIGNALS MATCH CRITERIA. ADJUST SEARCH FILTERS.')));
  let last='';
- for(const e of L){const m=e._k.slice(0,7);if(so==='date'&&m&&m!==last){last=m;const n=L.filter(x=>x._k.startsWith(m)).length;box.append(h('h2','month',fmt(e._k,{month:'long',year:'numeric'}),h('span',0,n+(n===1?' event':' events'))))}box.append(row(e,o,rt))}
+ for(const e of L){const m=e._k.slice(0,7);if(so==='date'&&m&&m!==last){last=m;const n=L.filter(x=>x._k.startsWith(m)).length;box.append(h('h2','month',fmt(e._k,{month:'long',year:'numeric'}),h('span',0,n+' '+plu(n,['event','events'],['wydarzenie','wydarzenia','wydarzeń']))))}box.append(row(e,o,rt))}
 }
 
 function hero(data){
  const U=ev.filter(up).sort((x,y)=>x._k.localeCompare(y._k)),n=U[0],f=$('facts');f.replaceChildren();
- if(!n){$('count').textContent='NO SIGNALS';$('where').textContent='No upcoming shows currently detected on radar.'}
- else{const d=Math.round((utc(n._k)-utc(today))/864e5),[v,p]=vp(n);$('count').textContent=d===0?'TODAY':d===1?'TOMORROW':d+' DAYS';$('where').textContent=`${v} — ${p}. Scheduled on ${fmt(n._k,{weekday:'long',day:'numeric',month:'long'})}.`}
+ if(!n){$('count').textContent=t('NO SIGNALS');$('where').textContent=t('No upcoming shows currently detected on radar.')}
+ else{const d=Math.round((utc(n._k)-utc(today))/864e5),[v,p]=vp(n);$('count').textContent=d===0?t('TODAY'):d===1?t('TOMORROW'):d+' '+t('DAYS');$('where').textContent=`${v} — ${p}. ${t('Scheduled on')} ${fmt(n._k,{weekday:'long',day:'numeric',month:'long'})}.`}
  const C=new Set(U.map(e=>cn(e.country)).filter(Boolean)),N=ev.filter(isNew).length;
- f.append(h('li',0,`${U.length} confirmed performances across ${C.size} global territories`),h('li',0,N?`${N} newly listed dates discovered this week`:'Radar matrix up to date'),
-  h('li',0,Number.isFinite(Date.parse(data.last_seen||''))?'Monitor last checked '+new Date(data.last_seen).toLocaleString('en-GB',{timeZone:'UTC',dateStyle:'medium',timeStyle:'short'})+' UTC':'Monitor check time unavailable'))}
+ f.append(h('li',0,`${U.length} ${plu(U.length,['confirmed performance','confirmed performances'],['potwierdzony występ','potwierdzone występy','potwierdzonych występów'])} ${t('across')} ${C.size} ${plu(C.size,['global territory','global territories'],['kraju','krajach','krajach'])}`),h('li',0,N?`${N} ${plu(N,['newly listed date discovered this week','newly listed dates discovered this week'],['nowa data odkryta w tym tygodniu','nowe daty odkryte w tym tygodniu','nowych dat odkrytych w tym tygodniu'])}`:t('Radar matrix up to date')),
+  h('li',0,Number.isFinite(Date.parse(data.last_seen||''))?t('Monitor last checked ')+new Date(data.last_seen).toLocaleString(LOC[LANG],{timeZone:'UTC',dateStyle:'medium',timeStyle:'short'})+' UTC':t('Monitor check time unavailable')))}
 
 const save=(k,v)=>{try{localStorage.setItem(k,v)}catch{}},read=k=>{try{return localStorage.getItem(k)||''}catch{return''}};
-for(const o of Object.values(A).sort((x,y)=>x.n.localeCompare(y.n))){const op=h('option',0,`${o.n}`);op.value=o.c;$('from').append(op)}
-const sv=read('bb_origin');$('from').value=A[sv]?sv:'WAW';if(read('bb_trip'))$('trip').value=read('bb_trip');
-for(const id of['from','trip','q','country','show','sort','budgetTicket','budgetHotel','budgetNights','budgetOther'])$(id).addEventListener('input',()=>{if(id==='from')save('bb_origin',$('from').value);if(id==='trip')save('bb_trip',$('trip').value);render()});
+for(const o of Object.values(A).sort((x,y)=>x.n.localeCompare(y.n))){const op=h('option',0,`${o.n}`);op.value=o.c;$(t('from')).append(op)}
+const sv=read('bb_origin');$(t('from')).value=A[sv]?sv:'WAW';if(read('bb_trip'))$('trip').value=read('bb_trip');
+for(const id of[t('from'),'trip','q','country','show','sort','budgetTicket','budgetHotel','budgetNights','budgetOther'])$(id).addEventListener('input',()=>{if(id===t('from'))save('bb_origin',$(t('from')).value);if(id==='trip')save('bb_trip',$('trip').value);render()});
 
 (async()=>{
  try{
@@ -1097,19 +1133,18 @@ for(const id of['from','trip','q','country','show','sort','budgetTicket','budget
   if(!Array.isArray(data.events)) throw Error('Missing events array in events.json');
   ev=data.events.filter(e=>e&&typeof e==='object'&&ymd(e.date));
   ev.forEach(e=>{e._k=ymd(e.date);e._d=dest(e)});
-  for(const c of[...new Set(ev.map(e=>String(e.country||'').trim()).filter(Boolean))].sort()){
-   const op=h('option',0,c);op.value=c;$('country').append(op);
-  }
-  hero(data);render();
+  fillCountries();
+  lastData=data;hero(data);render();
  }catch(err){
   console.error('Unable to load published concert data:',err);
-  $('count').textContent='OFFLINE';
-  $('where').textContent='Could not load the published concert list. Please retry after the next dashboard deployment.';
-  $('facts').replaceChildren(h('li',0,'Concert data unavailable — no sample events displayed'));
-  $('shown').textContent='Data unavailable';
-  $('list').replaceChildren(h('p','empty','Could not load events.json. Check the deployed dashboard data and refresh. If opening this HTML as a local file, use GitHub Pages or a local web server.'));
+  $('count').textContent=t('OFFLINE');
+  $('where').textContent=t('Could not load the published concert list. Please retry after the next dashboard deployment.');
+  $('facts').replaceChildren(h('li',0,t('Concert data unavailable — no sample events displayed')));
+  $('shown').textContent=t('Data unavailable');
+  $('list').replaceChildren(h('p','empty',t('Could not load events.json. Check the deployed dashboard data and refresh. If opening this HTML as a local file, use GitHub Pages or a local web server.')));
  }
 })();
+initLang();
 })();
 </script>
 </body>
