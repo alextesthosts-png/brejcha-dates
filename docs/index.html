@@ -726,6 +726,11 @@ footer {
   .hero-headline { font-size: clamp(1.35rem, 6vw, 2.3rem); letter-spacing: 0.01em; }
   .countdown-box, .facts-panel { padding: 18px; }
 }
+.layouts{display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:.72rem;color:rgba(226,232,240,.65)}
+.layouts a{padding:6px 12px;border:1px solid var(--border-dim);border-radius:6px;text-decoration:none;color:inherit;letter-spacing:.06em;text-transform:uppercase}
+.layouts a:hover{color:var(--neon-cyan);border-color:var(--border-cyan)}
+.layouts a[aria-current="page"]{color:var(--neon-cyan);border-color:var(--border-cyan);background:rgba(0,242,254,.08)}
+@media (max-width:768px){.top{flex-wrap:wrap}}
 </style>
 </head>
 <body>
@@ -739,6 +744,7 @@ footer {
         <span class="brand-sub">BSMR // FCKNG SERIOUS</span>
       </div>
     </div>
+    <nav class="layouts" aria-label="Choose layout"><span>Layout</span><a href="index.html" aria-current="page">Futuristic</a><a href="classic.html">Classic</a></nav>
     <div class="header-actions">
       <div class="sys-status">
         <span class="sys-dot"></span>
@@ -843,7 +849,7 @@ footer {
   <!-- HUD Footer -->
   <footer>
     <div>Unofficial fan initiative & architectural exploration, not affiliated with Boris Brejcha or Fckng Serious. Dates, times, ticket links and availability can change. Verify with official event sources before booking travel. Weather uses nearby airport coordinates; flight costs are not live fares.</div>
-    <div style="color: var(--neon-cyan)">Github repo: https://github.com/alextesthosts-png/brejcha-dates</div>
+    <div style="color: var(--neon-cyan)">Source code: <a href="https://github.com/alextesthosts-png/brejcha-dates" target="_blank" rel="noopener noreferrer">github.com/alextesthosts-png/brejcha-dates</a></div>
   </footer>
 </div>
 
