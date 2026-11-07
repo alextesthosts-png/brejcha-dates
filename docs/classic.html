@@ -19,9 +19,9 @@
 .hero{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:end;padding:44px 0 30px}
 .kick{color:var(--mut);font-weight:600}.count{font:800 clamp(4.2rem,15vw,9.5rem)/.9 var(--disp);color:var(--amber);margin:4px 0 10px}
 .where{font-size:1.25rem;font-weight:600;max-width:34ch}.facts{list-style:none;margin:0;padding:0 0 0 20px;border-left:2px solid var(--line);color:var(--mut);display:grid;gap:6px}
-.bar{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;grid-template-columns:1.3fr .9fr 1.4fr 1fr 1fr 1.1fr;gap:12px}
-label{font-size:.85rem;color:var(--mut);font-weight:600}
-input,select{display:block;width:100%;margin-top:5px;background:#10121a;border:1px solid #444a60;border-radius:9px;padding:10px;color:var(--txt);font:inherit}
+.bar{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,.9fr) minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.1fr);gap:12px}
+label{font-size:.85rem;color:var(--mut);font-weight:600;min-width:0}
+input,select{display:block;width:100%;min-width:0;text-overflow:ellipsis;margin-top:5px;background:#10121a;border:1px solid #444a60;border-radius:9px;padding:10px;color:var(--txt);font:inherit}
 .note{color:var(--mut);font-size:.88rem;margin:12px 2px 0}
 .month{display:flex;align-items:baseline;gap:12px;font:800 1.7rem/1 var(--disp);letter-spacing:.03em;margin:30px 0 12px}.month span{font:600 .9rem var(--body);color:var(--mut);letter-spacing:0}
 .stub{position:relative;display:grid;grid-template-columns:var(--sw) 1fr 260px;background:var(--bone);color:var(--ink);border-radius:14px;margin:0 0 12px}
@@ -42,12 +42,16 @@ input,select{display:block;width:100%;margin-top:5px;background:#10121a;border:1
 .place a{color:var(--uv);font-weight:700;text-decoration:underline;text-underline-offset:2px}
 .empty{padding:28px;border:1px dashed #555a70;border-radius:14px;color:var(--mut)}
 footer{margin-top:40px;color:var(--mut);font-size:.85rem;max-width:80ch}
-@media(max-width:860px){.bar{grid-template-columns:1fr 1fr}.hero{grid-template-columns:1fr}.facts{padding:12px 0 0;border-left:0;border-top:2px solid var(--line)}}
-@media(max-width:700px){.budgetfields{grid-template-columns:1fr 1fr}:root{--sw:74px}.stub{grid-template-columns:var(--sw) 1fr}.trip{grid-column:1/-1;border-radius:0 0 14px 14px;border-top:2px dashed #b4b0a2}.bar{grid-template-columns:1fr}}
+@media(max-width:860px){.bar{grid-template-columns:repeat(2,minmax(0,1fr))}.hero{grid-template-columns:1fr}.facts{padding:12px 0 0;border-left:0;border-top:2px solid var(--line)}}
+@media(max-width:700px){.budgetfields{grid-template-columns:1fr 1fr}:root{--sw:74px}.stub{grid-template-columns:var(--sw) 1fr}.trip{grid-column:1/-1;border-radius:0 0 14px 14px;border-top:2px dashed #b4b0a2}.bar{grid-template-columns:minmax(0,1fr)}}
+.layouts{display:flex;align-items:center;gap:6px;font-size:.85rem;color:var(--mut);font-weight:600}
+.layouts a{padding:5px 12px;border:1.5px solid #555a70;border-radius:999px;text-decoration:none;font-weight:700;color:var(--txt)}
+.layouts a:hover{background:#232634}.layouts a[aria-current="page"]{background:var(--amber);border-color:var(--amber);color:var(--ink)}
+footer p+p{margin-top:8px}footer a{color:var(--amber)}
 </style>
 </head>
 <body><div class="wrap">
-<header class="top"><span class="brand">Boris Brejcha tour tracker (unofficial)</span><a class="btn ghost" href="https://www.borisbrejcha.de/dates" target="_blank" rel="noopener noreferrer">Official tour dates<span class="sr" hidden> (opens in new tab)</span></a></header>
+<header class="top"><span class="brand">Boris Brejcha tour tracker (unofficial)</span><nav class="layouts" aria-label="Choose layout"><span>Layout</span><a href="index.html">Futuristic</a><a href="classic.html" aria-current="page">Classic</a></nav><a class="btn ghost" href="https://www.borisbrejcha.de/dates" target="_blank" rel="noopener noreferrer">Official tour dates<span class="sr" hidden> (opens in new tab)</span></a></header>
 <section class="hero" aria-live="polite"><div><p class="kick">Next show</p><p class="count" id="count">…</p><p class="where" id="where">Loading tour dates</p></div><ul class="facts" id="facts"></ul></section>
 <section class="bar" aria-label="Filters and travel">
 <label>Fly from<select id="from"></select></label>
@@ -70,7 +74,7 @@ footer{margin-top:40px;color:var(--mut);font-size:.85rem;max-width:80ch}
 </section>
 <p class="note">Travel prices are rough estimates from distance, for the day before to the day after each show. Use “Live fares” for real prices. <span id="shown" aria-live="polite"></span></p>
 <div id="list"><p class="empty">Loading concert data…</p></div>
-<footer>Unofficial fan project, not affiliated with Boris Brejcha. Dates, times and ticket links may change, so confirm details with the organizer before you travel. Times are as listed by the source. “New” means this tracker found the show in the last seven days.</footer>
+<footer><p>Unofficial fan project, not affiliated with Boris Brejcha. Dates, times and ticket links may change, so confirm details with the organizer before you travel. Times are as listed by the source. “New” means this tracker found the show in the last seven days. Weather uses nearby airport coordinates; flight costs are not live fares.</p><p>Source code: <a href="https://github.com/alextesthosts-png/brejcha-dates" target="_blank" rel="noopener noreferrer">github.com/alextesthosts-png/brejcha-dates</a></p></footer>
 </div>
 <script>
 (()=>{'use strict';
@@ -79,14 +83,14 @@ const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLo
 const AL={usa:'united states',us:'united states',uk:'united kingdom',uae:'united arab emirates','czech republic':'czechia'};
 const cn=s=>{s=norm(s).trim();return AL[s]||s};
 const A={},byC={},keys=[];
-`WAW|Warsaw Chopin|warsaw,warszawa|Poland|52.17|20.97
+`WAW|Warsaw Chopin (WAW)|warsaw,warszawa|Poland|52.17|20.97
 WMI|Warsaw Modlin|-|Poland|52.45|20.65
 KRK|Kraków|krakow,cracow|Poland|50.08|19.78
 GDN|Gdańsk|gdansk|Poland|54.38|18.47
 WRO|Wrocław|wroclaw|Poland|51.10|16.89
-BER|Berlin|berlin|Germany|52.36|13.50
+BER|Berlin Brandenburg|berlin|Germany|52.36|13.50
 DRS|Dresden|dresden|Germany|51.13|13.77
-FRA|Frankfurt|frankfurt|Germany|50.03|8.57
+FRA|Frankfurt Airport|frankfurt|Germany|50.03|8.57
 MUC|Munich|munich,munchen|Germany|48.35|11.79
 HAM|Hamburg|hamburg|Germany|53.63|9.99
 DUS|Düsseldorf|dusseldorf|Germany|51.29|6.77
@@ -97,18 +101,18 @@ BUD|Budapest|budapest|Hungary|47.44|19.26
 ZRH|Zurich|zurich,bern,berne|Switzerland|47.46|8.55
 GVA|Geneva|geneva|Switzerland|46.24|6.11
 BSL|Basel|basel|Switzerland|47.59|7.53
-AMS|Amsterdam|amsterdam|Netherlands|52.31|4.76
+AMS|Amsterdam Schiphol|amsterdam|Netherlands|52.31|4.76
 BRU|Brussels|brussels|Belgium|50.90|4.48
-CDG|Paris|paris|France|49.01|2.55
+CDG|Paris Charles de Gaulle|paris|France|49.01|2.55
 LHR|London Heathrow|london|United Kingdom|51.47|-0.45
 MAN|Manchester|manchester|United Kingdom|53.35|-2.27
 DUB|Dublin|dublin|Ireland|53.42|-6.27
-MAD|Madrid|madrid|Spain|40.47|-3.56
-BCN|Barcelona|barcelona|Spain|41.30|2.08
-IBZ|Ibiza|ibiza|Spain|38.87|1.37
+MAD|Madrid-Barajas|madrid|Spain|40.47|-3.56
+BCN|Barcelona El Prat|barcelona|Spain|41.30|2.08
+IBZ|Ibiza Airport|ibiza|Spain|38.87|1.37
 LIS|Lisbon|lisbon,lisboa|Portugal|38.77|-9.13
-FCO|Rome|rome,roma|Italy|41.80|12.24
-MXP|Milan|milan,milano|Italy|45.63|8.72
+FCO|Rome Fiumicino|rome,roma|Italy|41.80|12.24
+MXP|Milan Malpensa|milan,milano|Italy|45.63|8.72
 ATH|Athens|athens|Greece|37.94|23.94
 IST|Istanbul|istanbul|Turkey|41.26|28.74
 CPH|Copenhagen|copenhagen|Denmark|55.62|12.66
@@ -118,11 +122,11 @@ HEL|Helsinki|helsinki|Finland|60.32|24.96
 OTP|Bucharest|bucharest|Romania|44.57|26.10
 BEG|Belgrade|belgrade|Serbia|44.82|20.31
 JFK|New York JFK|new york|United States|40.64|-73.78
-LAX|Los Angeles|los angeles|United States|33.94|-118.41
+LAX|Los Angeles LAX|los angeles|United States|33.94|-118.41
 MIA|Miami|miami|United States|25.80|-80.29
-ORD|Chicago|chicago|United States|41.98|-87.90
+ORD|Chicago O'Hare|chicago|United States|41.98|-87.90
 YUL|Montréal|montreal|Canada|45.47|-73.74
-YYZ|Toronto|toronto|Canada|43.68|-79.63
+YYZ|Toronto Pearson|toronto|Canada|43.68|-79.63
 YVR|Vancouver|vancouver|Canada|49.19|-123.18
 MEX|Mexico City|mexico city,ciudad de mexico|Mexico|19.44|-99.07
 GUA|Guatemala City|guatemala|Guatemala|14.58|-90.53
@@ -130,13 +134,13 @@ BOG|Bogotá|bogota|Colombia|4.70|-74.15
 LIM|Lima|lima|Peru|-12.02|-77.11
 SCL|Santiago|santiago|Chile|-33.39|-70.79
 EZE|Buenos Aires|buenos aires|Argentina|-34.82|-58.54
-GRU|São Paulo|sao paulo,valinhos,campinas|Brazil|-23.44|-46.47
-DXB|Dubai|dubai|United Arab Emirates|25.25|55.37
+GRU|São Paulo Guarulhos|sao paulo,valinhos,campinas|Brazil|-23.44|-46.47
+DXB|Dubai International|dubai|United Arab Emirates|25.25|55.37
 TLV|Tel Aviv|tel aviv|Israel|32.01|34.89
 HND|Tokyo Haneda|tokyo|Japan|35.55|139.78
-SIN|Singapore|singapore|Singapore|1.36|103.99
-BKK|Bangkok|bangkok|Thailand|13.69|100.75
-SYD|Sydney|sydney|Australia|-33.95|151.18
+SIN|Singapore Changi|singapore|Singapore|1.36|103.99
+BKK|Bangkok Suvarnabhumi|bangkok|Thailand|13.69|100.75
+SYD|Sydney Kingsford|sydney|Australia|-33.95|151.18
 MEL|Melbourne|melbourne|Australia|-37.67|144.84
 BNE|Brisbane|brisbane|Australia|-27.38|153.12
 PER|Perth|perth|Australia|-31.94|115.97
@@ -161,6 +165,61 @@ const a=(href,c,txt)=>{const n=h('a',c,txt);n.href=href;n.target='_blank';n.rel=
 const money=n=>'€'+Math.round(n).toLocaleString('en-GB');
 const budget=()=>{const val=id=>Math.max(0,Number($(id).value)||0);return val('budgetTicket')+val('budgetHotel')*val('budgetNights')+val('budgetOther')};
 const maps=e=>'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent([e.location,e.country].filter(Boolean).join(', '));
+// Trainline needs its own station IDs, not airport codes or plain city names.
+// Resolve IDs when the visitor clicks; if the request is blocked, open a route page instead.
+const trainlineCities={WAW:'Warsaw',WMI:'Warsaw',KRK:'Krakow',GDN:'Gdansk',WRO:'Wroclaw',BER:'Berlin',DRS:'Dresden',FRA:'Frankfurt',MUC:'Munich',HAM:'Hamburg',DUS:'Dusseldorf',PRG:'Prague',VIE:'Vienna',GRZ:'Graz',BUD:'Budapest',ZRH:'Zurich',GVA:'Geneva',BSL:'Basel',AMS:'Amsterdam',BRU:'Brussels',CDG:'Paris',LHR:'London',MAN:'Manchester',DUB:'Dublin',MAD:'Madrid',BCN:'Barcelona',IBZ:'Ibiza',LIS:'Lisbon',FCO:'Rome',MXP:'Milan',ATH:'Athens',CPH:'Copenhagen',ARN:'Stockholm',OSL:'Oslo',HEL:'Helsinki',OTP:'Bucharest',BEG:'Belgrade'};
+const trainlineStationCache=new Map();
+async function trainlineStation(city){
+ if(trainlineStationCache.has(city))return trainlineStationCache.get(city);
+ const task=(async()=>{
+  const endpoint='https://www.thetrainline.com/api/locations-search/v2/search?searchTerm='+encodeURIComponent(city)+'&locale=en-US';
+  const response=await fetch(endpoint,{signal:AbortSignal.timeout(7000)});
+  if(!response.ok)throw Error('Trainline location lookup HTTP '+response.status);
+  const data=await response.json();
+  const locations=Array.isArray(data.searchLocations)?data.searchLocations:[];
+  const match=locations.find(x=>norm(x.name)===norm(city)&&x.locationType==='stationGroup')||locations.find(x=>norm(x.name)===norm(city));
+  if(!match||!/^urn:trainline:generic:loc:/.test(match.code||''))throw Error('No Trainline station for '+city);
+  return match.code;
+ })();
+ trainlineStationCache.set(city,task);
+ try{return await task}catch(err){trainlineStationCache.delete(city);throw err}
+}
+function trainlineRoutePage(from,to){
+ const slug=s=>norm(s).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+ return 'https://www.thetrainline.com/train-times/'+slug(from)+'-to-'+slug(to);
+}
+async function trainlineLink(origin,destination,date,roundTrip){
+ const from=trainlineCities[origin.c],to=trainlineCities[destination.c];
+ if(!from||!to)return 'https://www.thetrainline.com/';
+ const fallback=trainlineRoutePage(from,to);
+ try{
+  const [start,end]=await Promise.all([trainlineStation(from),trainlineStation(to)]);
+  const u=new URL('https://www.thetrainline.com/book/results');
+  u.searchParams.set('journeySearchType',roundTrip?'return':'single');
+  u.searchParams.set('origin',start);
+  u.searchParams.set('destination',end);
+  u.searchParams.set('outwardDate',shift(date,-1)+'T09:00:00');
+  u.searchParams.set('outwardDateType','departAfter');
+  if(roundTrip){u.searchParams.set('inwardDate',shift(date,1)+'T12:00:00');u.searchParams.set('inwardDateType','departAfter')}
+  u.searchParams.set('selectedTab','train');
+  u.searchParams.set('lang','en');
+  return u.href;
+ }catch(err){console.warn('Trainline prefilled search unavailable; opening route page:',err);return fallback}
+}
+function trainlineButton(origin,destination,date,roundTrip){
+ const button=h('a','btn','Compare trains');
+ button.href='https://www.thetrainline.com/';
+ button.target='_blank';button.rel='noopener noreferrer';
+ button.addEventListener('click',event=>{
+  event.preventDefault();
+  // Open the tab immediately to avoid popup blockers while station IDs are resolved.
+  const tab=window.open('about:blank','_blank');
+  if(!tab){window.location.href='https://www.thetrainline.com/';return}
+  tab.opener=null;
+  trainlineLink(origin,destination,date,roundTrip).then(link=>{tab.location.replace(link)}).catch(()=>{tab.location.replace('https://www.thetrainline.com/')});
+ });
+ return button;
+}
 const weatherCache=new Map();
 const weatherDesc=c=>({0:'Clear sky',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',45:'Fog',48:'Rime fog',51:'Light drizzle',53:'Drizzle',55:'Heavy drizzle',61:'Light rain',63:'Rain',65:'Heavy rain',71:'Light snow',73:'Snow',75:'Heavy snow',80:'Rain showers',81:'Rain showers',82:'Heavy showers',95:'Thunderstorms'})[c]||'Variable conditions';
 async function loadWeather(e,target){
@@ -190,7 +249,7 @@ function row(e,o,rt){
  const when=h('div','when',h('span','dow',k&&fmt(k,{weekday:'short'})),h('b','day',k?String(+k.slice(8)):'?'),h('span','mon',k&&fmt(k,{month:'short'})));
  const tags=h('p','tags',isNew(e)&&h('span','tag new','New this week'),!up(e)&&h('span','tag','Past'),tm&&tm!=='00:00'&&h('span','tag','Listed at '+tm),e.organizer&&!/^boris brejcha$/i.test(e.organizer)&&h('span','tag','By '+e.organizer));
  const buy=tk||via,host=tk?'Tickets from '+(e.ticket_provider||new URL(tk).hostname):via?'Ticket link opens through Bandsintown':'Ticket link not available yet';
- const info=h('div','info',h('h3',0,venue),h('p','place',place,' · ',a(maps(e),'','View on Google Maps ↗')),tags,h('div','acts',buy&&a(buy,'btn p','Buy tickets'),det&&a(det,'btn','Event page')),h('p','host',host));
+ const info=h('div','info',h('h3',0,venue),h('p','place',place,' · ',a(maps(e),'','View on Google Maps ↗')),tags,h('div','acts',buy&&a(buy,'btn p',tk?'Buy tickets':'Ticket link'),det&&a(det,'btn','Event page')),h('p','host',host));
  const weather=h('p','weatherline');
  if(up(e)&&e._d){const days=Math.round((utc(k)-utc(today))/864e5);if(days<=15){const b=h('button',0,'Check local forecast');b.type='button';b.addEventListener('click',()=>loadWeather(e,weather));weather.append('☁ ',b)}else weather.textContent='☁ Local weather forecast available about 16 days before the show.'}
  else if(up(e))weather.textContent='☁ Weather unavailable: destination not mapped.';
@@ -201,7 +260,7 @@ function row(e,o,rt){
  else{const km=Math.round(hav(o,d)),near=km<250,[lo,hi]=fare(km,rt);
   const fl='https://www.google.com/travel/flights?q='+encodeURIComponent(`Flights from ${o.c} to ${d.c} on ${shift(k,-1)}`+(rt?` through ${shift(k,1)}`:' one way'));
   trip=h('div','trip',h('p','fare',near?'Close by':`€${lo}–${hi}`),h('p','budgettotal',near?money(extra)+' + ground travel':`${money(extra+lo)}–${money(extra+hi)} total`),h('p','sub',near?`${km} km from ${o.n}. Train or car is easier.`:`Estimated ${rt?'round trip':'one way'}, ${o.c} to ${d.c}, ${km.toLocaleString('en-GB')} km`),
-   h('div','acts',!near&&a(fl,'btn','Live fares'),eu(o)&&eu(d)&&km<1500&&a('https://int.bahn.de/en','btn','Trains')))}
+   h('div','acts',!near&&a(fl,'btn','Live fares'),eu(o)&&eu(d)&&km<1500&&trainlineButton(o,d,k,rt)))}
  return h('article','stub',when,info,trip)}
 let ev=[];
 function render(){
@@ -221,14 +280,14 @@ function hero(data){
  else{const d=Math.round((utc(n._k)-utc(today))/864e5),[v,p]=vp(n);$('count').textContent=d===0?'Today':d===1?'Tomorrow':d+' days';$('where').textContent=`${v}, ${p}. ${fmt(n._k,{weekday:'long',day:'numeric',month:'long'})}.`}
  const C=new Set(U.map(e=>cn(e.country)).filter(Boolean)),N=ev.filter(isNew).length,last=Date.parse(data.last_seen||'');
  f.append(h('li',0,`${U.length} upcoming ${U.length===1?'show':'shows'} in ${C.size} ${C.size===1?'country':'countries'}`),h('li',0,N?`${N} newly found this week`:'Nothing new this week'),
-  h('li',0,Number.isFinite(last)?'Checked '+new Date(last).toLocaleString('en-GB',{timeZone:'UTC',dateStyle:'medium',timeStyle:'short'})+' UTC':'Last check unknown'))}
+  h('li',0,Number.isFinite(last)?'Monitor last checked '+new Date(last).toLocaleString('en-GB',{timeZone:'UTC',dateStyle:'medium',timeStyle:'short'})+' UTC':'Monitor check time unavailable'))}
 const save=(k,v)=>{try{localStorage.setItem(k,v)}catch{}},read=k=>{try{return localStorage.getItem(k)||''}catch{return''}};
-for(const o of Object.values(A).sort((x,y)=>x.n.localeCompare(y.n))){const op=h('option',0,`${o.n} (${o.c})`);op.value=o.c;$('from').append(op)}
+for(const o of Object.values(A).sort((x,y)=>x.n.localeCompare(y.n))){const op=h('option',0,`${o.n}`);op.value=o.c;$('from').append(op)}
 const sv=read('bb_origin');$('from').value=A[sv]?sv:'WAW';if(read('bb_trip'))$('trip').value=read('bb_trip');
 for(const id of['from','trip','q','country','show','sort','budgetTicket','budgetHotel','budgetNights','budgetOther'])$(id).addEventListener('input',()=>{if(id==='from')save('bb_origin',$('from').value);if(id==='trip')save('bb_trip',$('trip').value);render()});
 (async()=>{try{const r=await fetch('./events.json',{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);const data=await r.json();if(!Array.isArray(data.events))throw Error('Missing events');
- ev=data.events.filter(e=>e&&typeof e==='object');ev.forEach(e=>{e._k=ymd(e.date);e._d=dest(e)});
+ ev=data.events.filter(e=>e&&typeof e==='object'&&ymd(e.date));ev.forEach(e=>{e._k=ymd(e.date);e._d=dest(e)});
  for(const c of[...new Set(ev.map(e=>String(e.country||'').trim()).filter(Boolean))].sort()){const op=h('option',0,c);op.value=c;$('country').append(op)}
- hero(data);render()}catch(err){console.error(err);$('count').textContent='Offline';$('where').textContent='Could not load concert data. Please try again later.';$('list').replaceChildren(h('p','empty','Could not load concert data.'))}})();
+ hero(data);render()}catch(err){console.error('Unable to load published concert data:',err);$('count').textContent='Offline';$('where').textContent='Could not load the published concert list. Please retry after the next dashboard update.';$('facts').replaceChildren(h('li',0,'Concert data unavailable, no sample events shown'));$('shown').textContent='Data unavailable.';$('list').replaceChildren(h('p','empty','Could not load events.json. Check the deployed dashboard data and refresh. If you opened this file locally, use GitHub Pages or a local web server instead.'))}})();
 })();
 </script></body></html>
