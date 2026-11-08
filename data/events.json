@@ -21,22 +21,8 @@
     "dccfa39320035708f4c4",
     "f1862e2db218262d3173"
   ],
-  "last_seen": "2026-11-08T04:00:40.306666+00:00",
+  "last_seen": "2026-11-08T07:11:43.005739+00:00",
   "current_events": [
-    {
-      "date": "2026-11-07T19:00:00",
-      "title": "Boris Brejcha @ Banorte Stadium",
-      "location": "Banorte Stadium Ciudad Universitaria, Mexico",
-      "url": "https://www.bandsintown.com/e/108936680",
-      "ticket_url": "https://ultramexico.com/tickets/2026/",
-      "organizer": "Boris Brejcha",
-      "city": "Ciudad Universitaria, Mexico",
-      "lat": "19.32312",
-      "lon": "-99.18495",
-      "id": "7ee543f809bd0dc4a8ee",
-      "ticket_tracking_url": "https://www.bandsintown.com/t/108936680?app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=209",
-      "ticket_provider": "ultramexico.com"
-    },
     {
       "date": "2026-11-13T21:00:00",
       "title": "Boris Brejcha @ Laroc Club",
