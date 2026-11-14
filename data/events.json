@@ -1,6 +1,7 @@
 {
   "known_ids": [
     "0cfa8ffb014486470d88",
+    "145f8bc33fca6965b342",
     "15d33b3534d28dfe9540",
     "37b26d1c91e0bbd5165d",
     "3cf1fe1e488b2214c59a",
@@ -22,7 +23,7 @@
     "dccfa39320035708f4c4",
     "f1862e2db218262d3173"
   ],
-  "last_seen": "2026-11-14T09:55:10.591276+00:00",
+  "last_seen": "2026-11-14T13:01:26.126994+00:00",
   "current_events": [
     {
       "date": "2026-11-14T13:00:00",
@@ -93,6 +94,20 @@
       "id": "9be3790399a626bd3e62",
       "ticket_tracking_url": "https://www.bandsintown.com/t/1040487951?app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=209",
       "ticket_provider": "dice.fm"
+    },
+    {
+      "date": "2026-12-12T19:00:00",
+      "title": "Boris Brejcha @ Quake Arena",
+      "location": "Quake Arena Hyderabad, India",
+      "url": "https://www.bandsintown.com/e/109159772",
+      "ticket_url": "https://www.district.in/events/circus-city-takeover-ft-boris-hyderabad-2026-buy-tickets?utm_source=bandsintown&utm_medium=listing",
+      "organizer": "Boris Brejcha",
+      "city": "Hyderabad, India",
+      "lat": "17.4628509",
+      "lon": "78.3484142",
+      "id": "145f8bc33fca6965b342",
+      "ticket_tracking_url": "https://www.bandsintown.com/t/109159772?affil_code=&app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=700&ticket_id=2060975371&utm_campaign=ticket_tktpp&utm_medium=web&utm_source=widget",
+      "ticket_provider": "www.district.in"
     },
     {
       "date": "2026-12-18T14:00:00",
@@ -241,6 +256,7 @@
     "15d33b3534d28dfe9540": "2026-11-02T13:19:15.556206+00:00",
     "97f5ee6db895a1eef28e": "2026-11-03T19:03:07.348349+00:00",
     "7712e8cbdb00848a28bf": "2026-11-03T21:56:32.162582+00:00",
-    "d71a636368815fa1b8a1": "2026-11-09T16:12:37.656994+00:00"
+    "d71a636368815fa1b8a1": "2026-11-09T16:12:37.656994+00:00",
+    "145f8bc33fca6965b342": "2026-11-14T13:01:24.771851+00:00"
   }
 }
