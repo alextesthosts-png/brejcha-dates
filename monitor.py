@@ -2,16 +2,16 @@
 """Monitor Boris Brejcha tour dates; notify only about newly discovered events."""
 
 import hashlib
+import ipaddress
 import json
-import math
 import os
 import re
 import sys
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urljoin, urlparse
-from urllib.parse import parse_qs, quote_plus, unquote
+from urllib.parse import parse_qs
 
 import requests
 from bs4 import BeautifulSoup
@@ -50,12 +50,28 @@ def canonical_url(s):
     return parsed._replace(query="", fragment="").geturl().rstrip("/")
 
 
-def key_for(event):
+BANDSINTOWN_EVENT_RE = re.compile(r"^https?://(?:[^/]+\.)?bandsintown\.com/(?:e|event)/(\d+)", re.I)
+
+
+def legacy_key_for(event):
+    """Original ID: hash of date|title|location (changes if any of them is edited)."""
     core = "|".join(
         normalize(event.get(k)).casefold()
         for k in ("date", "title", "location")
     )
     return hashlib.sha256(core.encode("utf-8")).hexdigest()[:20]
+
+
+def key_for(event):
+    """Stable ID: the Bandsintown event number when the URL has one, else the legacy hash.
+
+    A Bandsintown ID survives start-time edits, venue renames and a switch between
+    the JSON-LD and DOM extraction paths, which would otherwise look like new concerts.
+    """
+    match = BANDSINTOWN_EVENT_RE.match(normalize(event.get("url")))
+    if match:
+        return hashlib.sha256(f"bit:{match.group(1)}".encode("utf-8")).hexdigest()[:20]
+    return legacy_key_for(event)
 
 
 def entity_name(value):
@@ -100,7 +116,6 @@ def safe_ticket_url(raw):
         if host in ("bandsintown.com", "www.bandsintown.com") or host.endswith(".bandsintown.com"):
             return ""
         # Reject obvious private IP addresses to avoid fetching internal resources.
-        import ipaddress
         try:
             ip = ipaddress.ip_address(host)
             if not ip.is_global:
@@ -112,11 +127,6 @@ def safe_ticket_url(raw):
         return parsed._replace(fragment="").geturl()
     except (ValueError, TypeError):
         return ""
-
-
-def resolve_ticket_url(raw):
-    """Resolve explicit ticket links; never treat a generic event URL as tickets."""
-    return resolve_ticket_url_http(raw)
 
 
 # Ticket CTA discovery: a Bandsintown /e/ event URL is NOT a ticket URL.
@@ -572,6 +582,9 @@ def discover_official_tickets(events):
                 print(f'Official ticket CTAs detected: {len(items)}')
                 # Match item identity using the exact matched href and event reference.
                 for event in events:
+                    if not _time_ok():
+                        print('Official ticket resolution: time budget used up, skipping the rest')
+                        break
                     if event.get('ticket_url') or event['id'] not in matches:
                         continue
                     href = matches[event['id']]
@@ -580,7 +593,6 @@ def discover_official_tickets(events):
                     if len(candidates) != 1:
                         diagnostics.append({'result': 'duplicate_button', 'event_id': event['id']})
                         continue
-                    item = candidates[0]
                     direct = resolve_ticket_url_http(href)
                     method = 'http' if direct else ''
                     if not direct and TRACKING_RE.match(href):
@@ -709,7 +721,7 @@ def enrich_tickets(events):
         except (ValueError, OSError):
             print("Warning: invalid ticket overrides JSON; ignoring it")
     for event in events:
-        manual = safe_ticket_url(overrides.get(event["id"], ""))
+        manual = safe_ticket_url(overrides.get(event["id"]) or overrides.get(event.get("legacy_id"), ""))
         if not manual:
             for rule, destination in overrides.items():
                 if "|" not in rule:
@@ -722,7 +734,7 @@ def enrich_tickets(events):
         if TRACKING_RE.match(candidate) and not event.get("ticket_tracking_url"):
             event["ticket_tracking_url"] = candidate
         # Do not visit a generic Bandsintown event-details page; it is not a ticket CTA.
-        event["ticket_url"] = manual or resolve_ticket_url(candidate)
+        event["ticket_url"] = manual or resolve_ticket_url_http(candidate)
         if event["ticket_url"]:
             event["ticket_provider"] = urlparse(event["ticket_url"]).hostname or ""
         else:
@@ -734,105 +746,6 @@ def enrich_tickets(events):
     print(f"Ticket discovery summary: {found}/{len(events)} events have direct ticket URLs "
           f"({time.monotonic() - _BUDGET['t0']:.0f}s, browser failures in a row: {_BUDGET['fails']})")
     return events
-
-# ---------------------------------------------------------------------------
-# Flight cost ESTIMATE (heuristic, not a live fare). Home airport is configurable:
-#   HOME_AIRPORT=WAW HOME_LAT=52.1657 HOME_LON=20.9671
-# ---------------------------------------------------------------------------
-HOME_AIRPORT = os.getenv("HOME_AIRPORT", "WAW")
-HOME_COORDS = (float(os.getenv("HOME_LAT", "52.1657")), float(os.getenv("HOME_LON", "20.9671")))
-GEOCODE_CACHE = Path("data/geocode_cache.json")
-_GEO_CALLS = [0]  # max 20 new lookups per run
-
-
-def _haversine_km(a, b):
-    la1, lo1, la2, lo2 = map(math.radians, (a[0], a[1], b[0], b[1]))
-    h = math.sin((la2 - la1) / 2) ** 2 + math.cos(la1) * math.cos(la2) * math.sin((lo2 - lo1) / 2) ** 2
-    return 2 * 6371 * math.asin(math.sqrt(h))
-
-
-def _geocode(place, cache):
-    """OpenStreetMap Nominatim lookup, cached on disk (1 request/second policy)."""
-    key = place.casefold()
-    if key in cache:
-        return cache[key]
-    if _GEO_CALLS[0] >= 20:
-        return None
-    _GEO_CALLS[0] += 1
-    try:
-        r = requests.get("https://nominatim.openstreetmap.org/search",
-                         params={"q": place, "format": "json", "limit": 1},
-                         headers={"User-Agent": "BorisBrejchaConcertMonitor/1.0"}, timeout=8)
-        data = r.json()
-        coords = [float(data[0]["lat"]), float(data[0]["lon"])] if data else None
-    except (requests.RequestException, ValueError, KeyError, IndexError, TypeError):
-        _GEO_CALLS[0] = 99  # network problem: stop geocoding this run, retry next run
-        return None
-    cache[key] = coords
-    time.sleep(1.1)
-    return coords
-
-
-def estimate_flight(event, cache):
-    """Rough economy return fare in EUR from HOME_AIRPORT, based on great-circle distance."""
-    dates = sorted(_dates_in_text(event.get("date", "")))
-    if not dates:
-        return {}
-    d1 = dates[0]
-    if datetime.strptime(d1, "%Y-%m-%d") < datetime.now() - timedelta(days=1):
-        return {}
-    try:
-        dest = (float(event.get("lat") or ""), float(event.get("lon") or ""))
-    except ValueError:
-        dest = None
-    parts = [x.strip() for x in event.get("location", "").split(",") if x.strip()]
-    place = event.get("city") or ", ".join(parts[-2:]) or event.get("location", "")
-    if not dest:
-        for query in (event.get("city"), event.get("location"), ", ".join(parts[-2:])):
-            if query:
-                dest = _geocode(query, cache)
-                if dest:
-                    break
-    if not dest:
-        return {}
-    km = round(_haversine_km(HOME_COORDS, dest))
-    d2 = (datetime.strptime(d1, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
-    out = {
-        "flight_from": HOME_AIRPORT,
-        "flight_km": km,
-        "flight_search_url": "https://www.google.com/travel/flights?q=" + quote_plus(
-            f"Flights from {HOME_AIRPORT} to {place} on {d1} through {d2}"),
-    }
-    if km < 250:
-        out["flight_note"] = "Under ~250 km: train or car is probably better than flying"
-    else:
-        if km <= 4000:
-            low, high = 40 + 0.05 * km, 80 + 0.12 * km
-        else:
-            low, high = 200 + 0.06 * km, 350 + 0.14 * km
-        out["flight_est_eur_low"] = int(round(low / 5) * 5)
-        out["flight_est_eur_high"] = int(round(high / 5) * 5)
-    return out
-
-
-def enrich_flights(events):
-    """Best effort: never blocks alerts."""
-    cache = {}
-    if GEOCODE_CACHE.exists():
-        try:
-            cache = json.loads(GEOCODE_CACHE.read_text(encoding="utf-8"))
-        except (ValueError, OSError):
-            cache = {}
-    before = len(cache)
-    try:
-        for event in events:
-            event.update(estimate_flight(event, cache))
-    except Exception as exc:
-        print(f"Flight estimate unavailable ({type(exc).__name__})")
-    if len(cache) != before:
-        GEOCODE_CACHE.parent.mkdir(parents=True, exist_ok=True)
-        GEOCODE_CACHE.write_text(json.dumps(cache, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
-
 
 def best_link(event):
     """Direct ticket seller > Bandsintown tracking link (redirects to seller) > event page."""
@@ -1003,6 +916,7 @@ def parse_events(html):
     for event in events:
         event = {k: normalize(v) for k, v in event.items()}
         event["id"] = key_for(event)
+        event["legacy_id"] = legacy_key_for(event)
         unique[event["id"]] = event
 
     return sorted(
@@ -1039,75 +953,85 @@ def fetch_html():
             browser.close()
 
 
-def send_discord(event, webhook):
-    """Send one real or sample concert notification."""
+def _env_int(name, default):
+    try:
+        return int(os.getenv(name, default))
+    except (TypeError, ValueError):
+        return default
 
-    content = (
-        f"🎧 **New Boris Brejcha concert detected!**\n"
-        f"📅 **Date:** {event['date']}\n"
-        f"🎵 **Event:** {event['title'][:180]}\n"
-        f"📍 **Location:** "
-        f"{event['location'][:180] or 'See event page'}\n"
+
+# More new events than this in one run is treated as suspicious (e.g. the site changed
+# its markup and every event got a new ID): send one summary instead of an alert flood.
+MAX_INDIVIDUAL_ALERTS = _env_int("MAX_INDIVIDUAL_ALERTS", 5)
+
+
+def format_alert(event, markdown=False):
+    b = "**" if markdown else ""
+    return (
+        f"🎧 {b}New Boris Brejcha concert detected!{b}\n"
+        f"📅 {b}Date:{b} {event['date']}\n"
+        f"🎵 {b}Event:{b} {event['title'][:180]}\n"
+        f"📍 {b}Location:{b} {event['location'][:180] or 'See event page'}\n"
         f"🔗 {best_link(event)}"
     )
 
+
+def format_bulk_alert(events, markdown=False):
+    b = "**" if markdown else ""
+    lines = [
+        f"⚠️ {b}{len(events)} Boris Brejcha concerts appeared at once.{b}",
+        "Either a large tour was announced or the dates page changed its layout. "
+        "They were recorded without individual alerts:",
+    ]
+    for event in events[:12]:
+        where = f" ({event['location'][:80]})" if event.get("location") else ""
+        lines.append(f"• {event['date'][:10]} — {event['title'][:100]}{where}")
+    if len(events) > 12:
+        lines.append(f"…and {len(events) - 12} more.")
+    lines.append(f"🔗 {URL}")
+    return "\n".join(lines)
+
+
+def post_discord(content, webhook):
+    """POST a message to a Discord webhook. Never let the webhook URL reach logs."""
     payload = {
         "content": content[:1900],
         "allowed_mentions": {"parse": []},
     }
-
-    headers = {
-        "User-Agent": "BorisBrejchaConcertMonitor/1.0",
-    }
+    headers = {"User-Agent": "BorisBrejchaConcertMonitor/1.0"}
 
     for attempt in range(3):
-        response = requests.post(
-            webhook,
-            json=payload,
-            headers=headers,
-            timeout=30,
-        )
+        try:
+            response = requests.post(webhook, json=payload, headers=headers, timeout=30)
+        except requests.RequestException:
+            # The exception text contains the webhook path (the secret), so drop it.
+            raise RuntimeError("Discord request failed (network or timeout).") from None
 
         if response.status_code == 429 and attempt < 2:
             try:
-                delay = float(
-                    response.json().get("retry_after", 2)
-                )
+                delay = float(response.json().get("retry_after", 2))
             except (ValueError, TypeError, AttributeError):
                 delay = 2
-
             time.sleep(max(0, min(delay, 60)))
             continue
 
         if not response.ok:
-            # Do not print the webhook URL: it contains a secret.
-            raise RuntimeError(
-                "Discord rejected notification "
-                f"(HTTP {response.status_code})."
-            )
+            raise RuntimeError(f"Discord rejected notification (HTTP {response.status_code}).")
 
         print("Discord notification delivered successfully.")
         return
 
 
-def send_telegram(event, bot_token, chat_id):
-    """Send a concert notification using the Telegram Bot API."""
-    message = (
-        "🎧 New Boris Brejcha concert detected!\n"
-        f"📅 Date: {event['date']}\n"
-        f"🎵 Event: {event['title'][:180]}\n"
-        f"📍 Location: {event['location'][:180] or 'See event page'}\n"
-        f"🔗 {best_link(event)}"
-    )
+def post_telegram(text, bot_token, chat_id):
+    """Send a message with the Telegram Bot API. Never let the token reach logs."""
     # Telegram's Bot API returns HTTP 200 with {"ok": false} in some errors.
-    # Avoid including the token-bearing URL in exception messages.
     for attempt in range(3):
         try:
             response = requests.post(
                 f"https://api.telegram.org/bot{bot_token}/sendMessage",
                 json={
                     "chat_id": chat_id,
-                    "text": message,
+                    "text": text[:4000],
                     "disable_notification": False,
                     "disable_web_page_preview": True,
                 },
@@ -1130,11 +1054,19 @@ def send_telegram(event, bot_token, chat_id):
             accepted = False
 
         if not response.ok or not accepted:
-            raise RuntimeError(
-                f"Telegram rejected notification (HTTP {response.status_code})."
-            )
+            raise RuntimeError(f"Telegram rejected notification (HTTP {response.status_code}).")
         print("Telegram notification delivered successfully.")
         return
+
+
+def send_discord(event, webhook):
+    """Send one real or sample concert notification."""
+    post_discord(format_alert(event, markdown=True), webhook)
+
+
+def send_telegram(event, bot_token, chat_id):
+    """Send a concert notification using the Telegram Bot API."""
+    post_telegram(format_alert(event), bot_token, chat_id)
 
 
 def save_state(known, events, pending=None, first_seen=None):
@@ -1151,6 +1083,102 @@ def save_state(known, events, pending=None, first_seen=None):
         json.dumps(data, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
+
+
+def reuse_cached_tickets(events, previous):
+    """Reuse previously resolved URLs to avoid repeated external requests each scan."""
+    old_events = {}
+    for old in (previous or {}).get("current_events", []):
+        if isinstance(old, dict):
+            for key in (old.get("legacy_id"), old.get("id")):
+                if key:
+                    old_events[key] = old
+    for event in events:
+        old = old_events.get(event["id"]) or old_events.get(event.get("legacy_id"), {})
+        raw = event.get("ticket_url", "")
+        if TRACKING_RE.match(raw):
+            event["ticket_tracking_url"] = raw
+        elif old.get("ticket_tracking_url"):
+            event["ticket_tracking_url"] = old["ticket_tracking_url"]
+        # Reuse a previously resolved seller URL (delete it from events.json to force a refresh).
+        cached = safe_ticket_url(old.get("ticket_url", ""))
+        if cached and (not raw or TRACKING_RE.match(raw)):
+            event["ticket_url"] = cached
+
+
+def queue_new_events(events, known, pending, first_seen, now):
+    """Migrate legacy IDs, then queue alerts for events that are neither known nor queued.
+
+    Returns the list of newly queued events. Mutates known, pending and first_seen.
+    """
+    # Events recorded under the old date|title|location ID keep their history.
+    for event in events:
+        legacy = event.get("legacy_id")
+        if event["id"] not in known and legacy in known:
+            known.add(event["id"])
+            if legacy in first_seen:
+                first_seen.setdefault(event["id"], first_seen[legacy])
+
+    queued = set(pending)
+    for item in pending.values():
+        queued.update(item.get("event_ids", []))
+
+    new_events = [
+        e for e in events
+        if e["id"] not in known and e["id"] not in queued and e.get("legacy_id") not in queued
+    ]
+
+    if len(new_events) > MAX_INDIVIDUAL_ALERTS:
+        print(f"WARNING: {len(new_events)} new events at once (limit {MAX_INDIVIDUAL_ALERTS}); "
+              "sending one summary instead of individual alerts.")
+        pending[f"bulk:{now}"] = {
+            "bulk": [{k: e.get(k, "") for k in ("date", "title", "location")} for e in new_events],
+            "event_ids": [e["id"] for e in new_events],
+            "delivered": [],
+        }
+    else:
+        for event in new_events:
+            pending.setdefault(event["id"], {"event": event, "delivered": []})
+
+    for event in new_events:
+        first_seen.setdefault(event["id"], now)
+    for key in pending:
+        if not key.startswith("bulk:"):
+            first_seen.setdefault(key, now)
+    return new_events
+
+
+def deliver_pending(known, events, pending, first_seen, webhook, bot_token, chat_id):
+    """Send every queued alert to both destinations, saving progress after each step."""
+    for key in list(pending):
+        item = pending[key]
+        delivered = set(item.get("delivered", []))
+        if "bulk" in item:
+            discord_text = format_bulk_alert(item["bulk"], markdown=True)
+            telegram_text = format_bulk_alert(item["bulk"])
+        else:
+            discord_text = format_alert(item["event"], markdown=True)
+            telegram_text = format_alert(item["event"])
+
+        if "discord" not in delivered:
+            post_discord(discord_text, webhook)
+            delivered.add("discord")
+            item["delivered"] = sorted(delivered)
+            save_state(known, events, pending, first_seen)
+
+        if "telegram" not in delivered:
+            post_telegram(telegram_text, bot_token, chat_id)
+            delivered.add("telegram")
+            item["delivered"] = sorted(delivered)
+            save_state(known, events, pending, first_seen)
+
+        # Mark fully processed only after both destinations accept the alert.
+        if "bulk" in item:
+            known.update(item.get("event_ids", []))
+        else:
+            known.add(key)
+        del pending[key]
+        save_state(known, events, pending, first_seen)
 
 
 def main():
@@ -1180,75 +1208,40 @@ def main():
         if STATE.exists()
         else None
     )
-    # Reuse previously resolved URLs to avoid repeated external requests each scan.
-    old_events = {e.get("id"): e for e in (previous or {}).get("current_events", []) if isinstance(e, dict)}
-    for event in events:
-        old = old_events.get(event["id"], {})
-        raw = event.get("ticket_url", "")
-        if TRACKING_RE.match(raw):
-            event["ticket_tracking_url"] = raw
-        elif old.get("ticket_tracking_url"):
-            event["ticket_tracking_url"] = old["ticket_tracking_url"]
-        # Reuse a previously resolved seller URL (delete it from events.json to force a refresh).
-        cached = safe_ticket_url(old.get("ticket_url", ""))
-        if cached and (not raw or TRACKING_RE.match(raw)):
-            event["ticket_url"] = cached
-    enrich_tickets(events)
-    enrich_flights(events)
-    current = {event["id"] for event in events}
+    reuse_cached_tickets(events, previous)
 
     if previous is None:
+        enrich_tickets(events)
         print(f"Initial baseline: {len(events)} concerts recorded, no notifications sent.")
-        save_state(current, events, first_seen={})
+        save_state({event["id"] for event in events}, events, first_seen={})
         return
 
     known = set(previous.get("known_ids", []))
     pending = previous.get("pending_notifications", {})
     if not isinstance(pending, dict):
         raise RuntimeError("Invalid pending_notifications in state file.")
-
     first_seen = previous.get("first_seen", {})
     if not isinstance(first_seen, dict):
         raise RuntimeError("Invalid first_seen in state file.")
-    # Older concerts stay historical: do not invent a discovery timestamp.
-    discovered_at = datetime.now(timezone.utc).isoformat()
-    new_events = [event for event in events if event["id"] not in known]
-    for event in new_events:
-        first_seen.setdefault(event["id"], discovered_at)
-    for event_id in pending:
-        first_seen.setdefault(event_id, discovered_at)
 
-    print(f"{len(events)} currently found; {len(new_events)} not yet fully notified.")
+    new_events = queue_new_events(
+        events, known, pending, first_seen, datetime.now(timezone.utc).isoformat()
+    )
+    print(f"{len(events)} currently found; {len(new_events)} newly queued; "
+          f"{len(pending)} alert(s) pending.")
 
-    # Retain previously pending events even if temporarily removed from the page.
-    for event in new_events:
-        pending.setdefault(event["id"], {"event": event, "delivered": []})
-
-    # Persist the queue before making network requests.
+    # Persist the queue BEFORE the slow ticket lookups, so a timeout cannot lose an alert.
     save_state(known, events, pending, first_seen)
 
-    for event_id in list(pending):
-        item = pending[event_id]
-        event = item["event"]
-        delivered = set(item.get("delivered", []))
+    enrich_tickets(events)
+    # Give queued alerts the ticket links found during enrichment.
+    by_id = {event["id"]: event for event in events}
+    for key, item in pending.items():
+        if "event" in item and key in by_id:
+            item["event"] = by_id[key]
+    save_state(known, events, pending, first_seen)
 
-        if "discord" not in delivered:
-            send_discord(event, webhook)
-            delivered.add("discord")
-            item["delivered"] = sorted(delivered)
-            save_state(known, events, pending, first_seen)
-
-        if "telegram" not in delivered:
-            send_telegram(event, bot_token, chat_id)
-            delivered.add("telegram")
-            item["delivered"] = sorted(delivered)
-            save_state(known, events, pending, first_seen)
-
-        # Mark fully processed only after both destinations accept the event.
-        known.add(event_id)
-        del pending[event_id]
-        save_state(known, events, pending, first_seen)
-
+    deliver_pending(known, events, pending, first_seen, webhook, bot_token, chat_id)
     save_state(known, events, pending, first_seen)
 
 
