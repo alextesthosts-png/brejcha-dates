@@ -33,9 +33,15 @@ jobs:
         with:
           ref: ${{ github.event.repository.default_branch }}
       - name: Prepare public dashboard data
+        env:
+          # The monitor only commits real changes (plus a daily heartbeat), so take the
+          # check time from the scheduled run that triggered this deploy when there is one.
+          LAST_CHECK: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.event == 'schedule' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.updated_at || '' }}
         run: |
           python - <<'PY'
           import json
+          import os
+          from datetime import datetime
           from pathlib import Path
           source = json.loads(Path('data/events.json').read_text(encoding='utf-8'))
           first_seen = source.get('first_seen', {})
@@ -56,11 +62,19 @@ jobs:
                   'country': country,
                   'url': event.get('url', ''),
                   'ticket_url': event.get('ticket_url', ''),
+                  'ticket_tracking_url': event.get('ticket_tracking_url', ''),
                   'ticket_provider': event.get('ticket_provider', ''),
                   'organizer': event.get('organizer', ''),
                   'first_seen': first_seen.get(event.get('id')),
               })
-          public = {'last_seen': source.get('last_seen'), 'events': output}
+          last_seen = source.get('last_seen')
+          try:
+              check = os.environ.get('LAST_CHECK', '')
+              if check and (not last_seen or datetime.fromisoformat(check) > datetime.fromisoformat(last_seen)):
+                  last_seen = check
+          except ValueError:
+              pass
+          public = {'last_seen': last_seen, 'events': output}
           Path('docs').mkdir(exist_ok=True)
           Path('docs/events.json').write_text(json.dumps(public, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
           print(f'Prepared {len(output)} public events without notification state')

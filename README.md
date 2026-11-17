@@ -1,6 +1,6 @@
 # Boris Brejcha Concert Monitor
 
-A Python and GitHub Actions monitor for newly published concerts on [Boris Brejcha's official dates page](https://www.borisbrejcha.de/dates). It uses a headless browser to extract events, remembers previously seen concerts, and sends notifications to **Discord and Telegram** for newly detected events. This is a personal project built with the assistance of AI tools.
+A Python and GitHub Actions monitor for newly published concerts on [Boris Brejcha's official dates page](https://www.borisbrejcha.de/dates). It uses a headless browser to extract events, remembers previously seen concerts, sends notifications to **Discord and Telegram** for newly detected events, looks up direct ticket-seller links, and publishes a **GitHub Pages dashboard** (`docs/`). This is a personal project built with the assistance of AI tools.
 
 ## Setup
 
@@ -74,15 +74,14 @@ For each candidate it:
 
 `normalize()` collapses whitespace and strips surrounding spaces. `canonical_url()` resolves relative URLs against the dates page, permits HTTP(S) only, and removes query parameters, fragments, and trailing slashes.
 
-`key_for()` generates a deterministic ID from the normalized, case-folded combination:
+`key_for()` generates a deterministic ID (first 20 hex characters of a SHA-256 hash):
 
-```text
-date | title | location
-```
+- When the event URL is a Bandsintown event page (`bandsintown.com/e/<number>`), the ID is based on that **Bandsintown event number**. It survives start-time edits, venue renames, and a switch between the JSON-LD and DOM extraction paths.
+- Otherwise it falls back to the normalized, case-folded `date | title | location` (`legacy_key_for()`).
 
-It hashes this string with SHA-256 and uses the first 20 hexadecimal characters. Ticket URLs are deliberately excluded because they may change or be reused. Events with the same ID are deduplicated, and the result is sorted by date and title.
+Every event also carries `legacy_id` (the `date | title | location` hash). Concerts recorded under their legacy ID are recognised and migrated automatically, without new alerts. Ticket URLs are deliberately excluded from IDs because they may change or be reused. Events with the same ID are deduplicated, and the result is sorted by date and title.
 
-**Limitation:** a change to an event's date, title, or location creates a different ID, potentially triggering a second notification for a corrected or rescheduled event.
+**Limitation:** for events without a Bandsintown URL, a change to the date, title, or location still creates a different ID and can trigger a second notification.
 
 ### 4. Persistent event history
 
@@ -93,15 +92,18 @@ The state file is `data/events.json`:
 | `known_ids` | Sorted list of all historically detected event IDs that have been fully processed |
 | `last_seen` | UTC timestamp of the most recent state save |
 | `current_events` | Event details extracted during the latest successful check |
-| `pending_notifications` | Events awaiting delivery to one or both notification services, including which services have already accepted each alert |
+| `pending_notifications` | Alerts awaiting delivery to one or both notification services, including which services have already accepted each alert |
+| `first_seen` | UTC time each event was first detected (drives the dashboard's NEW badge) |
 
 On the **first run without a state file**, all extracted events become a baseline and **no Discord or Telegram notifications are sent**.
 
 On subsequent runs, an event is considered new when its ID is absent from `known_ids`. Historical IDs are retained even if an event disappears from the website, preventing repeated alerts when it returns unchanged. Existing historical events are **not** automatically resent to Telegram merely because Telegram was added later.
 
+**Flood guard:** if more than `MAX_INDIVIDUAL_ALERTS` (default 5) events look new in a single run, the monitor sends **one summary message** listing them instead of individual alerts. This protects against a page-layout change that would otherwise make every concert look new. A genuine large tour announcement also produces a summary rather than individual alerts.
+
 ### 5. Discord and Telegram notifications
 
-For each new event, `main()` sends a concert announcement containing its date, title, location (or a fallback), and URL.
+For each new event, `main()` sends a concert announcement containing its date, title, location (or a fallback), and the best available link: direct ticket seller, then Bandsintown ticket-tracking link, then event page.
 
 **Discord:** `send_discord(event, webhook)` uses the `DISCORD_WEBHOOK_URL` secret and sends a JSON POST with:
 
@@ -110,14 +112,25 @@ For each new event, `main()` sends a concert announcement containing its date, t
 - Message content truncated to 1,900 characters
 - A 30-second request timeout
 - Up to three total attempts for HTTP 429, using a bounded `retry_after` delay
+- Network errors are re-raised without the original exception text, because that text contains the webhook URL (a secret) and Actions logs of a public repository are public
 
 **Telegram:** `send_telegram(event, bot_token, chat_id)` uses `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID`. It calls Telegram's `sendMessage` Bot API method, requests a normal (not silently disabled) notification, and disables link previews. It uses a 30-second timeout, retries HTTP 429 up to three total attempts using Telegram's `parameters.retry_after`, and checks both the HTTP response and Telegram's JSON `ok` field. Errors are reported without deliberately printing the token-bearing API URL.
 
 The bot can message a private chat after its recipient has started the bot, or a group/channel where the bot has posting access. **Telegram push alerts still depend on each recipient's app, chat mute settings, and device notification settings.**
 
-### 6. State persistence and duplicate prevention
+### 6. Ticket links
 
-For a newly detected event, the monitor adds an entry to `pending_notifications` and saves the state locally. It then:
+After new events are queued (and the queue saved), `enrich_tickets()` tries to find a direct ticket-seller link for every event, best effort and within a time budget (`TICKET_BUDGET_S`, default 150 s):
+
+1. A manual override from `data/ticket_overrides.json`, keyed by event ID or by `"YYYY-MM-DD|City"`.
+2. A previously resolved seller URL from the state file (delete it from `events.json` to force a refresh).
+3. The official page's ticket buttons, matched conservatively to one event, then their Bandsintown `/t/` tracking links followed with `curl_cffi` (Chrome TLS fingerprint), a real browser, or a click as a last resort.
+
+In the workflow this uses headed Chrome under `xvfb` (`HEADED_CHROME=1`). Bandsintown often blocks automated visitors, so expect some events to stay on the Bandsintown tracking link; ticket-lookup failures never block alerts. Diagnostics go to `data/ticket_debug.json` and `data/tracking_debug.json`.
+
+### 7. State persistence and duplicate prevention
+
+For a newly detected event, the monitor adds an entry to `pending_notifications` and saves the state locally **before** the slow ticket lookups, so a timeout during the lookups cannot lose an alert. After the lookups it refreshes the queued alert with any ticket link found. It then:
 
 1. Sends to Discord unless that destination is already recorded as delivered.
 2. Saves the successful Discord delivery marker.
@@ -127,11 +140,11 @@ For a newly detected event, the monitor adds an entry to `pending_notifications`
 
 A pending event is retried on a later run even if it has temporarily disappeared from the live dates page. This avoids intentionally resending to a destination that already succeeded when the other destination failed.
 
-The GitHub Actions workflow attempts to commit `data/events.json` after monitoring, **including after a failed monitoring step**, if the state file changed.
+The GitHub Actions workflow attempts to commit `data/events.json` after monitoring, **including after a failed monitoring step**. It commits only when something other than `last_seen` changed, plus a daily heartbeat commit (GitHub disables schedules after 60 days without repository activity). If the push is rejected because the branch moved during the run, it rebases and retries up to three times.
 
 This provides **best-effort deduplication, not exactly-once delivery**. Local state saves are not durable across GitHub-hosted runs until committed and pushed. If a service accepts an alert but the run fails before the updated state reaches GitHub, the alert may be sent again. A push failure can also prevent retry markers from persisting.
 
-### 7. GitHub Actions schedule and manual modes
+### 8. GitHub Actions schedule and manual modes
 
 The workflow is `.github/workflows/monitor.yml` and includes:
 
@@ -146,16 +159,20 @@ The `workflow_dispatch` trigger also supports:
 
 | Mode | Behavior |
 | --- | --- |
-| Normal monitoring | Install dependencies and Chromium, scrape events, notify on new IDs, persist state |
+| Normal monitoring | Install dependencies and Chromium, run unit tests, scrape events, notify on new IDs, look up ticket links, persist state |
 | Basic Discord webhook test (`test_discord`) | Send a simple message without scraping or changing state |
 | Sample concert test (`test_concert`) | Import `send_discord()` and send a fictional Discord concert without scraping or changing state |
 | Telegram sample test (`test_telegram`) | Import `send_telegram()` and send a fictional Telegram concert without scraping or changing state |
 
 All three test modes skip state persistence, and **only one test checkbox may be selected per run**. The sample tests validate notification delivery, **not** live extraction or event comparison. A normal run has all three test options unchecked. The workflow uses `ubuntu-24.04` to avoid Chromium installation problems encountered on Ubuntu 26.04 and has a 12-minute job timeout.
 
-### 8. Failures and diagnostics
+### 9. Dashboard (GitHub Pages)
 
-- **Zero events:** save the rendered page to `data/debug.html`, raise an error, and leave historical state unchanged. GitHub Actions attempts to upload a `debug-html` artifact retained for three days.
+`.github/workflows/deploy-dashboard.yml` publishes `docs/` to GitHub Pages after each monitor run and on pushes that touch `docs/` or `data/events.json`. It writes `docs/events.json` with public fields only (no notification state). `index.html` is the main layout and `classic.html` an alternative. When the deploy follows a scheduled monitor run, the dashboard shows that run's time as the last check.
+
+### 10. Failures and diagnostics
+
+- **Zero events:** save the rendered page to `data/debug.html`, raise an error, and leave historical state unchanged. GitHub Actions attempts to upload a `debug-files` artifact (also containing the ticket diagnostics) retained for three days.
 - **Discord or Telegram failure:** stop processing further events; successful deliveries may already be saved locally in `pending_notifications`, and the workflow attempts to commit that state.
 - **Missing credentials:** fail if `DISCORD_WEBHOOK_URL`, `TELEGRAM_BOT_TOKEN`, or `TELEGRAM_CHAT_ID` is missing.
 - **Browser, navigation, or parsing error:** exit nonzero and inspect the GitHub Actions logs.
@@ -168,7 +185,8 @@ The scraper previously extracted an initial baseline of **15 concerts** from the
 - Website HTML, JSON-LD, JavaScript, or loading behavior may change.
 - Fixed delays and scrolling may miss unusually slow or interactive content.
 - JSON-LD can contain only a subset of events and prevent the DOM fallback from running.
-- Date, title, or location edits may produce a new ID and a repeat notification.
+- For events without a Bandsintown URL, date, title, or location edits may produce a new ID and a repeat notification.
+- More than `MAX_INDIVIDUAL_ALERTS` new events in one run produce a single summary alert, not individual ones.
 - The monitor detects newly seen events, **not** cancellations or removals.
 - Scheduled GitHub Actions jobs can be delayed or skipped.
 - Discord and Telegram delivery and Git commits are not transactional; exactly-once delivery is not guaranteed.
@@ -177,11 +195,11 @@ The scraper previously extracted an initial baseline of **15 concerts** from the
 - WhatsApp notification delivery is **not implemented** in this repository.
 - Concert details are not independently checked against ticketing providers.
 
-If extraction returns zero events, inspect the `debug-html` artifact. If extraction becomes incomplete, review the website structure and consider adapting `extract_jsonld()`, `extract_dom()`, or a suitable underlying event-data endpoint.
+If extraction returns zero events, inspect the `debug-files` artifact. If extraction becomes incomplete, review the website structure and consider adapting `extract_jsonld()`, `extract_dom()`, or a suitable underlying event-data endpoint.
 
 ## Local use
 
-Install Python dependencies:
+Install Python dependencies (includes `curl_cffi`):
 
 ```bash
 python -m pip install -r requirements.txt
@@ -222,7 +240,7 @@ python -m unittest discover -s tests
 
 | Problem | Possible cause / action |
 | --- | --- |
-| No events extracted | Download `debug-html`; inspect rendered HTML and loading behavior |
+| No events extracted | Download `debug-files`; inspect rendered HTML and loading behavior |
 | Fewer events than expected | JSON-LD may contain only a subset and prevent DOM fallback |
 | Discord HTTP 401 or 404 | Check whether the webhook still exists; regenerate and update the secret if needed |
 | Discord HTTP 403 | Check webhook permissions, validity, and request headers; the monitor uses a custom user-agent |
@@ -233,7 +251,9 @@ python -m unittest discover -s tests
 | Group receives no messages | Check the group chat ID (usually negative), bot membership, and posting permissions |
 | Git push HTTP 403 | Check `contents: write`, workflow permissions, and branch protection |
 | No scheduled runs | Confirm Actions are enabled and the workflow is on the default branch; inactive public repos may have schedules disabled |
-| Duplicate notifications | Event identity fields may have changed, or a prior state commit may have failed |
+| Duplicate notifications | Event identity fields may have changed (events without a Bandsintown URL), or a prior state commit may have failed |
+| One summary instead of individual alerts | More than `MAX_INDIVIDUAL_ALERTS` events looked new at once; check whether the page layout changed |
+| No direct ticket link | Bandsintown may be blocking the runner; see `data/tracking_debug.json` in `debug-files`, or add a manual entry to `data/ticket_overrides.json` |
 | Missing notifications | Inspect run logs, extracted events, `known_ids`, and `pending_notifications` |
 | Python import or indentation errors | Verify `monitor.py` is complete, including `send_discord()`, `send_telegram()`, and `main()` |
 | Sample concert test fails | Inspect the `Send sample concert notification` step; it imports `send_discord()` |
