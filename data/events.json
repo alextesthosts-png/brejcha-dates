@@ -1,11 +1,20 @@
 {
   "known_ids": [
     "0cfa8ffb014486470d88",
+    "0deb7e3ea0b545dfd810",
     "145f8bc33fca6965b342",
     "15d33b3534d28dfe9540",
+    "1902ce26cd3b7332dde0",
+    "19c67a2a8bd2b14ad931",
+    "1fa5b5474de5ae6542a3",
+    "29e77fedff4cdcfd851f",
+    "2ff42f0f319e2dc7bd09",
     "37b26d1c91e0bbd5165d",
     "3cf1fe1e488b2214c59a",
+    "42284e049a8ed6b7b1e1",
+    "44109d903e4233fa7d2c",
     "44e6b5104fbcf70677ee",
+    "465f0d731cfaec243f2e",
     "5dd0a483d6e67641be79",
     "5dd473eb6cc0ebe64600",
     "77078b57accb1b61d38a",
@@ -13,17 +22,23 @@
     "7a120a2ebf84c8b86943",
     "7ee543f809bd0dc4a8ee",
     "837a4a9902bc0e6199ba",
+    "897570fa650117c68a07",
     "8c2eb5753bf33258bc25",
     "97f5ee6db895a1eef28e",
     "9be3790399a626bd3e62",
     "a769e516f16c7d2f23ab",
+    "aa2bf7eea469e6a276cd",
     "aca77504f70da76807bd",
     "ae81a601249e65d33aa5",
+    "c118cca2e79231050483",
+    "c1db9955db883fcc65fd",
     "d71a636368815fa1b8a1",
+    "d7d30b62ead329220741",
     "dccfa39320035708f4c4",
+    "ef4547321541c9f4ad9d",
     "f1862e2db218262d3173"
   ],
-  "last_seen": "2026-11-17T16:05:38.605440+00:00",
+  "last_seen": "2026-11-17T19:13:05.508489+00:00",
   "current_events": [
     {
       "date": "2026-11-20T21:00:00",
@@ -35,7 +50,8 @@
       "city": "Vösendorf, Austria",
       "lat": "48.11238669999999",
       "lon": "16.3133133",
-      "id": "ae81a601249e65d33aa5",
+      "id": "aa2bf7eea469e6a276cd",
+      "legacy_id": "ae81a601249e65d33aa5",
       "ticket_tracking_url": "https://www.bandsintown.com/t/108680336?app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=209",
       "ticket_provider": "shop.o-klub.at"
     },
@@ -49,7 +65,8 @@
       "city": "Dubai International Financial Centre, United Arab Emirates",
       "lat": "25.2106",
       "lon": "55.27787",
-      "id": "5dd473eb6cc0ebe64600",
+      "id": "c118cca2e79231050483",
+      "legacy_id": "5dd473eb6cc0ebe64600",
       "ticket_tracking_url": "https://www.bandsintown.com/t/1040169393?app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=209",
       "ticket_provider": "dubai.platinumlist.net"
     },
@@ -63,7 +80,8 @@
       "city": "Hannover, Germany",
       "lat": "52.32294839999999",
       "lon": "9.804915",
-      "id": "15d33b3534d28dfe9540",
+      "id": "44109d903e4233fa7d2c",
+      "legacy_id": "15d33b3534d28dfe9540",
       "ticket_tracking_url": "https://www.bandsintown.com/t/109107965?app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=209",
       "ticket_provider": "www.digistore24.com"
     },
@@ -77,7 +95,8 @@
       "city": "Lisbon, Portugal",
       "lat": "38.71667",
       "lon": "-9.13333",
-      "id": "9be3790399a626bd3e62",
+      "id": "2ff42f0f319e2dc7bd09",
+      "legacy_id": "9be3790399a626bd3e62",
       "ticket_tracking_url": "https://www.bandsintown.com/t/1040487951?app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=209",
       "ticket_provider": "dice.fm"
     },
@@ -91,7 +110,8 @@
       "city": "Hyderabad, India",
       "lat": "17.4628509",
       "lon": "78.3484142",
-      "id": "145f8bc33fca6965b342",
+      "id": "d7d30b62ead329220741",
+      "legacy_id": "145f8bc33fca6965b342",
       "ticket_tracking_url": "https://www.bandsintown.com/t/109159772?app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=209",
       "ticket_provider": "www.district.in"
     },
@@ -105,7 +125,8 @@
       "city": "Bengaluru, India",
       "lat": "13.1741517",
       "lon": "77.59613949999999",
-      "id": "0cfa8ffb014486470d88",
+      "id": "465f0d731cfaec243f2e",
+      "legacy_id": "0cfa8ffb014486470d88",
       "ticket_tracking_url": "https://www.bandsintown.com/t/109103732?app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=209",
       "ticket_provider": "thumpn.com"
     },
@@ -119,7 +140,8 @@
       "city": "Joondalup, Australia",
       "lat": "-31.74445",
       "lon": "115.76835",
-      "id": "3cf1fe1e488b2214c59a",
+      "id": "0deb7e3ea0b545dfd810",
+      "legacy_id": "3cf1fe1e488b2214c59a",
       "ticket_tracking_url": "https://www.bandsintown.com/t/1040352768?app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=209",
       "ticket_provider": "megatix.com.au"
     },
@@ -133,7 +155,8 @@
       "city": "Sydney Olympic Park, Australia",
       "lat": "-33.84306979999999",
       "lon": "151.0676963",
-      "id": "44e6b5104fbcf70677ee",
+      "id": "42284e049a8ed6b7b1e1",
+      "legacy_id": "44e6b5104fbcf70677ee",
       "ticket_tracking_url": "https://www.bandsintown.com/t/1040352407?app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=209",
       "ticket_provider": "megatix.com.au"
     },
@@ -147,7 +170,8 @@
       "city": "Eatons Hill, Australia",
       "lat": "-27.3379564",
       "lon": "152.962972",
-      "id": "77078b57accb1b61d38a",
+      "id": "ef4547321541c9f4ad9d",
+      "legacy_id": "77078b57accb1b61d38a",
       "ticket_tracking_url": "https://www.bandsintown.com/t/1040352328?app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=209",
       "ticket_provider": "megatix.com.au"
     },
@@ -161,7 +185,8 @@
       "city": "Ascot Vale, Australia",
       "lat": "-37.7830351",
       "lon": "144.9099057",
-      "id": "8c2eb5753bf33258bc25",
+      "id": "29e77fedff4cdcfd851f",
+      "legacy_id": "8c2eb5753bf33258bc25",
       "ticket_tracking_url": "https://www.bandsintown.com/t/1040351682?app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=209",
       "ticket_provider": "megatix.com.au"
     },
@@ -175,7 +200,8 @@
       "city": "Montréal, Canada",
       "lat": "45.5086092",
       "lon": "-73.5521448",
-      "id": "7a120a2ebf84c8b86943",
+      "id": "1fa5b5474de5ae6542a3",
+      "legacy_id": "7a120a2ebf84c8b86943",
       "ticket_tracking_url": "https://www.bandsintown.com/t/109059975?app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=209",
       "ticket_provider": "billets.igloofest.ca"
     },
@@ -189,7 +215,8 @@
       "city": "Toronto, Canada",
       "lat": "43.640978",
       "lon": "-79.35467059999999",
-      "id": "d71a636368815fa1b8a1",
+      "id": "c1db9955db883fcc65fd",
+      "legacy_id": "d71a636368815fa1b8a1",
       "ticket_tracking_url": "https://www.bandsintown.com/t/1040819798?app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=209",
       "ticket_provider": "www.ticketweb.ca"
     },
@@ -203,7 +230,8 @@
       "city": "Copenhagen, Denmark",
       "lat": "55.672442",
       "lon": "12.621380999999928",
-      "id": "97f5ee6db895a1eef28e",
+      "id": "19c67a2a8bd2b14ad931",
+      "legacy_id": "97f5ee6db895a1eef28e",
       "ticket_tracking_url": "https://www.bandsintown.com/t/109113667?app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=209",
       "ticket_provider": "gravitycph.dk"
     },
@@ -217,7 +245,8 @@
       "city": "Warszawa, Poland",
       "lat": "52.2204287",
       "lon": "21.0414388",
-      "id": "7712e8cbdb00848a28bf",
+      "id": "897570fa650117c68a07",
+      "legacy_id": "7712e8cbdb00848a28bf",
       "ticket_tracking_url": "https://www.bandsintown.com/t/109113510?app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=209",
       "ticket_provider": "www.warsawmusicfestival.com"
     },
@@ -231,7 +260,8 @@
       "city": "Dresden, Germany",
       "lat": "51.0536529",
       "lon": "13.7360774",
-      "id": "aca77504f70da76807bd",
+      "id": "1902ce26cd3b7332dde0",
+      "legacy_id": "aca77504f70da76807bd",
       "ticket_tracking_url": "https://www.bandsintown.com/t/109048807?app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=209",
       "ticket_provider": "dresden.ticket.io"
     }
@@ -243,6 +273,12 @@
     "97f5ee6db895a1eef28e": "2026-11-03T19:03:07.348349+00:00",
     "7712e8cbdb00848a28bf": "2026-11-03T21:56:32.162582+00:00",
     "d71a636368815fa1b8a1": "2026-11-09T16:12:37.656994+00:00",
-    "145f8bc33fca6965b342": "2026-11-14T13:01:24.771851+00:00"
+    "145f8bc33fca6965b342": "2026-11-14T13:01:24.771851+00:00",
+    "44109d903e4233fa7d2c": "2026-11-02T13:19:15.556206+00:00",
+    "d7d30b62ead329220741": "2026-11-14T13:01:24.771851+00:00",
+    "465f0d731cfaec243f2e": "2026-10-31T12:57:50.798477+00:00",
+    "c1db9955db883fcc65fd": "2026-11-09T16:12:37.656994+00:00",
+    "19c67a2a8bd2b14ad931": "2026-11-03T19:03:07.348349+00:00",
+    "897570fa650117c68a07": "2026-11-03T21:56:32.162582+00:00"
   }
 }
