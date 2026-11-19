@@ -39,7 +39,7 @@
     "ef4547321541c9f4ad9d",
     "f1862e2db218262d3173"
   ],
-  "last_seen": "2026-11-19T16:14:45.463598+00:00",
+  "last_seen": "2026-11-19T19:11:04.833523+00:00",
   "current_events": [
     {
       "date": "2026-11-20T21:00:00",
@@ -143,7 +143,7 @@
       "lon": "88.4648752",
       "id": "7b87861c39230cef48b2",
       "legacy_id": "9119ad1c676167abcc98",
-      "ticket_tracking_url": "https://www.bandsintown.com/t/109181094?affil_code=&app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=700&ticket_id=2061636353&utm_campaign=ticket_tktpp&utm_medium=web&utm_source=widget",
+      "ticket_tracking_url": "https://www.bandsintown.com/t/109181094?app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=209",
       "ticket_provider": "www.skillboxes.com"
     },
     {
