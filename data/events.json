@@ -36,10 +36,11 @@
     "d71a636368815fa1b8a1",
     "d7d30b62ead329220741",
     "dccfa39320035708f4c4",
+    "ef3419419962ebada03e",
     "ef4547321541c9f4ad9d",
     "f1862e2db218262d3173"
   ],
-  "last_seen": "2026-11-19T19:11:04.833523+00:00",
+  "last_seen": "2026-11-20T10:16:55.966881+00:00",
   "current_events": [
     {
       "date": "2026-11-20T21:00:00",
@@ -115,6 +116,21 @@
       "legacy_id": "145f8bc33fca6965b342",
       "ticket_tracking_url": "https://www.bandsintown.com/t/109159772?app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=209",
       "ticket_provider": "www.district.in"
+    },
+    {
+      "date": "2026-12-13T17:00:00",
+      "title": "Boris Brejcha @ Leisure Valley Park",
+      "location": "Leisure Valley Park Gurugram, India",
+      "url": "https://www.bandsintown.com/e/109185624",
+      "ticket_url": "https://thumpn.com/event/RNKKCF/fold-festival-gurugram?utm_source=bandsintown&utm_medium=partner_feed&utm_campaign=fold-festival-gurugram",
+      "organizer": "Boris Brejcha",
+      "city": "Gurugram, India",
+      "lat": "28.4697441",
+      "lon": "77.06617419999999",
+      "id": "ef3419419962ebada03e",
+      "legacy_id": "5ae615c50e4e5cfb44aa",
+      "ticket_tracking_url": "https://www.bandsintown.com/t/109185624?affil_code=&app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=700&ticket_id=2061776783&utm_campaign=ticket_tktpp&utm_medium=web&utm_source=widget",
+      "ticket_provider": "thumpn.com"
     },
     {
       "date": "2026-12-18T14:00:00",
@@ -296,6 +312,7 @@
     "c1db9955db883fcc65fd": "2026-11-09T16:12:37.656994+00:00",
     "19c67a2a8bd2b14ad931": "2026-11-03T19:03:07.348349+00:00",
     "897570fa650117c68a07": "2026-11-03T21:56:32.162582+00:00",
-    "7b87861c39230cef48b2": "2026-11-19T13:32:10.900225+00:00"
+    "7b87861c39230cef48b2": "2026-11-19T13:32:10.900225+00:00",
+    "ef3419419962ebada03e": "2026-11-20T10:16:19.645443+00:00"
   }
 }
