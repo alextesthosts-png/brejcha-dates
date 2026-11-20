@@ -40,7 +40,7 @@
     "ef4547321541c9f4ad9d",
     "f1862e2db218262d3173"
   ],
-  "last_seen": "2026-11-20T10:16:55.966881+00:00",
+  "last_seen": "2026-11-20T13:25:25.453541+00:00",
   "current_events": [
     {
       "date": "2026-11-20T21:00:00",
@@ -89,16 +89,16 @@
     },
     {
       "date": "2026-12-01T12:00:00",
-      "title": "Boris Brejcha @ TBC, Lisboa",
-      "location": "TBC, Lisboa Lisbon, Portugal",
+      "title": "Boris Brejcha @ Lisbon Congress Centre",
+      "location": "Lisbon Congress Centre Lisboa, Portugal",
       "url": "https://www.bandsintown.com/e/1040487951",
       "ticket_url": "https://dice.fm/event/dkmb96-boris-brejcha-lisbon-2026-new-date-venue-1st-dec-tbc-lisboa-lisbon-tickets?click_id=Yr8_czS6TR6cwiq-Yy1qwQ&pid=530cb286&_branch_match_id=1645705507859871126&utm_medium=partners_api&_branch_referrer=H4sIAAAAAAAAAwXBOw6DMAwA0NuwQYCWNKoUdeAE%2FSxMEbENWPwNUlQGzs573b4v21Opgac%2BQQZKmlGVjxrNvQA0PnvBwNA7RluJcXB89e%2BjIfAaV%2F9sDe9oYbTFLQWfGx2dQg2J8NQ6L3PYSGzZyTzSBQgiY1VoAAAA",
       "organizer": "Boris Brejcha",
-      "city": "Lisbon, Portugal",
-      "lat": "38.71667",
-      "lon": "-9.13333",
+      "city": "Lisboa, Portugal",
+      "lat": "38.6989489",
+      "lon": "-9.184230099999999",
       "id": "2ff42f0f319e2dc7bd09",
-      "legacy_id": "9be3790399a626bd3e62",
+      "legacy_id": "b4adabbb8f84fd3485ca",
       "ticket_tracking_url": "https://www.bandsintown.com/t/1040487951?app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=209",
       "ticket_provider": "dice.fm"
     },
@@ -129,7 +129,7 @@
       "lon": "77.06617419999999",
       "id": "ef3419419962ebada03e",
       "legacy_id": "5ae615c50e4e5cfb44aa",
-      "ticket_tracking_url": "https://www.bandsintown.com/t/109185624?affil_code=&app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=700&ticket_id=2061776783&utm_campaign=ticket_tktpp&utm_medium=web&utm_source=widget",
+      "ticket_tracking_url": "https://www.bandsintown.com/t/109185624?app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=209",
       "ticket_provider": "thumpn.com"
     },
     {
