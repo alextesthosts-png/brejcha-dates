@@ -40,23 +40,8 @@
     "ef4547321541c9f4ad9d",
     "f1862e2db218262d3173"
   ],
-  "last_seen": "2026-11-20T13:25:25.453541+00:00",
+  "last_seen": "2026-11-21T01:23:48.041861+00:00",
   "current_events": [
-    {
-      "date": "2026-11-20T21:00:00",
-      "title": "Boris Brejcha @ Eventhotel Pyramide",
-      "location": "Eventhotel Pyramide Vösendorf, Austria",
-      "url": "https://www.bandsintown.com/e/108680336",
-      "ticket_url": "https://shop.o-klub.at/shop/registrations/8ec09634-0767-4240-9f5c-dae2e659b6e5/events",
-      "organizer": "Boris Brejcha",
-      "city": "Vösendorf, Austria",
-      "lat": "48.11238669999999",
-      "lon": "16.3133133",
-      "id": "aa2bf7eea469e6a276cd",
-      "legacy_id": "ae81a601249e65d33aa5",
-      "ticket_tracking_url": "https://www.bandsintown.com/t/108680336?app_id=99d348e5aadcf8646ea1950b646b96f4&came_from=209",
-      "ticket_provider": "shop.o-klub.at"
-    },
     {
       "date": "2026-11-27T22:00:00",
       "title": "Boris Brejcha @ Soho Garden Meydan",
